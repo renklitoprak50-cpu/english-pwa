@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reader | English PWA</title>
+
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#121212">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&display=swap"
+        rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/main.css">
+
+    <!-- Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/idb@7/build/umd.js"></script>
+    <!-- epubjs needs jszip -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
+</head>
+
+<body class="dark-theme reader-mode">
+
+    <div class="reader-container">
+        <!-- Top Toolbar -->
+        <header class="reader-toolbar glass-panel">
+            <button id="btn-back" class="icon-btn" aria-label="Back to Dashboard">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+            </button>
+
+            <div class="book-info">
+                <h2 id="book-title" class="truncate">Loading...</h2>
+                <div id="book-progress" class="progress-bar thin">
+                    <div class="progress-fill" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <button id="btn-settings" class="icon-btn" aria-label="Reader Settings">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path
+                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                    </path>
+                </svg>
+            </button>
+        </header>
+
+        <!-- Main Reading Area (epubjs injects here) -->
+        <main class="book-viewer">
+            <button id="prev-page" class="nav-btn prev fade" aria-label="Previous Page">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+            </button>
+            <div id="viewer" class="epub-container"></div>
+            <button id="next-page" class="nav-btn next fade" aria-label="Next Page">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+            </button>
+        </main>
+    </div>
+
+    <!-- Smart Dictionary Modal -->
+    <div id="dict-modal" class="dict-modal hidden">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h3 id="dict-word">Word</h3>
+                <button id="dict-play" class="icon-btn action" aria-label="Pronounce">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="dict-phonetic" id="dict-phonetic">/wɜːd/</div>
+
+            <div class="dict-body">
+                <p id="dict-definition" class="definition">Loading definition...</p>
+                <div class="context-box">
+                    <strong>Context:</strong>
+                    <i id="dict-context">"This is the sentence where the word appeared."</i>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button id="dict-save" class="btn primary full-width">Save to Flashcards</button>
+                <button id="dict-close" class="btn text-btn full-width">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Core Scripts -->
+    <script src="js/db.js"></script>
+    <script src="js/dictionary.js"></script>
+    <script src="js/speech.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/reader.js"></script>
+</body>
+
+</html>
