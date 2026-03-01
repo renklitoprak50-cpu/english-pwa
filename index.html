@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>English Reader PWA | V2</title>
+    <title>Polyglot PWA | V3.4 Install</title>
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#121212">
@@ -13,7 +13,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
     <link rel="stylesheet" href="css/main.css">
 
     <script src="https://cdn.jsdelivr.net/npm/idb@7/build/umd.js"></script>
@@ -22,35 +21,79 @@
 
 <body class="dark-theme">
 
-    <div class="app-container dashboard layout">
+    <!-- PWA INSTALL BANNER -->
+    <div id="pwa-install-banner" class="hidden"
+        style="background:var(--accent-primary); color:white; padding:12px; text-align:center; font-weight:500; z-index: 1000; position: fixed; top: 0; left: 0; right: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: flex; flex-direction: column; align-items: center; gap: 8px;">
+        <div>
+            <strong>Polyglot Reader'ı Yükle</strong> 🚀<br>
+            <span id="install-instructions" style="font-size: 0.85rem; opacity: 0.9;">Çevrimdışı okumak ve daha hızlı
+                erişim için ana ekrana ekleyin.</span>
+        </div>
+        <div style="display:flex; gap: 10px;">
+            <button id="btn-install-pwa" class="btn"
+                style="background:white; color:var(--accent-primary); padding:4px 12px; font-weight:bold;">Yükle</button>
+            <button id="btn-dismiss-install" class="btn text-btn"
+                style="color:rgba(255,255,255,0.8); padding:4px;">Kapat</button>
+        </div>
+    </div>
+
+    <!-- Push content down if banner is active -->
+    <div class="app-container dashboard layout" id="main-layout">
         <header class="top-nav">
             <div class="brand">
-                <h1>Read<span>&Learn</span></h1>
+                <h1>Polyglot<span>Reader</span></h1>
             </div>
             <div class="actions">
                 <span id="account-status" class="badge">Checking...</span>
-                <button id="pwa-install-btn" class="btn secondary hidden" aria-label="Install App">Install App</button>
             </div>
         </header>
 
         <main class="dashboard-content">
 
-            <!-- Unified Search Bar -->
+            <!-- Elite Omni Search Bar -->
             <section class="search-section glass-panel">
                 <div class="search-bar">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="11" cy="11" r="8"></circle>
                         <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                     </svg>
-                    <input type="text" id="omni-search" placeholder="Search Books or Audiobooks (e.g. Sherlock)">
+                    <input type="text" id="omni-search" placeholder="Kitap veya Sesli Kitap Ara (örn. Sherlock)">
                     <div id="search-spinner" class="spinner hidden"></div>
+                </div>
+
+                <!-- V4 Multi-Language Filters UI -->
+                <div class="search-filters mt-3">
+                    <div class="filter-group mb-2"
+                        style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; margin-bottom: 8px;">
+                        <span class="filter-label" style="color:var(--accent-primary);">İçerik Dili:</span>
+                        <div class="filter-buttons" id="filter-lang"></div>
+                    </div>
+
+                    <div class="filter-group mt-2">
+                        <span class="filter-label">Tip:</span>
+                        <div class="filter-buttons" id="filter-type">
+                            <button class="btn filter-btn active" data-val="all">Hepsi</button>
+                            <button class="btn filter-btn" data-val="text">Sadece Metin 📖</button>
+                            <button class="btn filter-btn" data-val="audio">Sadece Ses 🎧</button>
+                            <button class="btn filter-btn" data-val="combo">👑 Combo</button>
+                        </div>
+                    </div>
+                    <div class="filter-group mt-2">
+                        <span class="filter-label">Seviye:</span>
+                        <div class="filter-buttons" id="filter-level">
+                            <button class="btn filter-btn active" data-val="all">Hepsi</button>
+                            <button class="btn filter-btn" data-val="A1-A2">A1-A2 (Kolay)</button>
+                            <button class="btn filter-btn" data-val="B1-B2">B1-B2 (Orta)</button>
+                            <button class="btn filter-btn" data-val="C1-C2">C1-C2 (İleri)</button>
+                        </div>
+                    </div>
                 </div>
             </section>
 
             <div id="search-results-container" class="hidden glass-panel">
                 <div class="section-header">
-                    <h3>Search Results</h3>
-                    <button id="close-search" class="btn text-btn">Close</button>
+                    <h3>Arama Sonuçları</h3>
+                    <button id="close-search" class="btn text-btn">Kapat</button>
                 </div>
                 <div class="books-grid" id="search-results-grid"></div>
             </div>
@@ -59,66 +102,44 @@
             <section class="stats-overview">
                 <div class="stat-card glass-panel">
                     <div class="stat-info">
-                        <h3>Vocabulary Built</h3>
+                        <h3>Öğrenilen Kelime</h3>
                         <p class="stat-number" id="total-words">0</p>
                     </div>
                 </div>
 
                 <div class="stat-card glass-panel">
                     <div class="stat-info">
-                        <h3>Local Uploads</h3>
-                        <p class="stat-number" id="local-uploads-count">0 <span id="local-uploads-limit">/ 1</span></p>
+                        <h3>Kapasite</h3>
+                        <p class="stat-number">Sınırsız <span id="local-uploads-limit">Yerel Yükleme</span></p>
                     </div>
                 </div>
             </section>
 
             <!-- Upload Area -->
             <section class="action-section glass-panel">
-                <h2 class="section-title">Upload Custom Book</h2>
-                <p class="section-desc">Upload an EPUB or PDF directly from your device.</p>
+                <h2 class="section-title">Kendi Kitabını Yükle</h2>
+                <p class="section-desc">Cihazınızdaki bir EPUB veya PDF dosyasını yükleyip Türkçe sözlükle okuyun.</p>
                 <div class="file-upload-wrapper mt-3">
                     <label for="epub-upload" class="btn primary full-width upload-btn" id="upload-label">
-                        Choose EPUB/PDF
+                        Dosya Seç (EPUB/PDF)
                     </label>
                     <input type="file" id="epub-upload" accept=".epub,.pdf" class="hidden-input">
                 </div>
-                <p class="premium-notice mt-2" id="premium-upload-notice"
-                    style="display:none; color: var(--warning); font-size: 0.9rem;">
-                    👑 Premium Required: You have reached the limit of 1 local upload on the Free tier.
-                </p>
             </section>
 
             <!-- Showcases -->
             <section class="showcase-section">
-                <!-- Offline Library -->
                 <div class="library-shelf mt-4">
-                    <h2 class="section-title">My Offline Library</h2>
+                    <h2 class="section-title">Çevrimdışı Kütüphanem</h2>
                     <div class="books-horizontal" id="offline-books-grid">
-                        <div class="empty-state">No books saved for offline reading.</div>
+                        <div class="empty-state">Henüz yerel olarak kaydedilmiş bir kitabınız bulunmuyor.</div>
                     </div>
-                </div>
-
-                <!-- OpenLibrary Selection -->
-                <div class="library-shelf mt-4 hidden">
-                    <h2 class="section-title">Classic Books<br><span
-                            style="font-size:0.8rem; color:var(--text-muted); font-weight:normal;">via
-                            OpenLibrary</span></h2>
-                    <div class="books-horizontal" id="openlibrary-grid"></div>
-                </div>
-
-                <!-- LibriVox Audiobooks -->
-                <div class="library-shelf mt-4 hidden">
-                    <h2 class="section-title">Listen & Read<br><span
-                            style="font-size:0.8rem; color:var(--text-muted); font-weight:normal;">via LibriVox</span>
-                    </h2>
-                    <div class="books-horizontal" id="librivox-grid"></div>
                 </div>
             </section>
 
         </main>
     </div>
 
-    <!-- Core Scripts -->
     <script src="js/globals.js"></script>
     <script src="js/db.js"></script>
     <script src="js/library.js"></script>

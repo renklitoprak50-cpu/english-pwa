@@ -4,40 +4,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reader | English PWA V2</title>
+    <title>Hybrid Reader | V3.2 Fail-Safe Embed</title>
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#121212">
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&display=swap"
         rel="stylesheet">
-
     <link rel="stylesheet" href="css/main.css">
 
-    <!-- Core DB & Globals -->
     <script src="js/globals.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/idb@7/build/umd.js"></script>
-
-    <!-- ePubJS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
-
-    <!-- PDF.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
-    <script>
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
-    </script>
+    <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';</script>
 </head>
 
 <body class="dark-theme reader-mode">
 
-    <div class="reader-container">
+    <div class="reader-wrapper" id="reader-wrapper">
         <!-- Top Toolbar -->
         <header class="reader-toolbar glass-panel">
-            <button id="btn-back" class="icon-btn" aria-label="Back to Dashboard">
+            <button id="btn-back" class="icon-btn" aria-label="Back">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="19" y1="12" x2="5" y2="12"></line>
                     <polyline points="12 19 5 12 12 5"></polyline>
@@ -46,12 +36,13 @@
 
             <div class="book-info">
                 <h2 id="book-title" class="truncate">Loading...</h2>
-                <div id="book-progress" class="progress-bar thin">
+                <!-- Local Book Progress -->
+                <div id="book-progress" class="progress-bar thin hidden">
                     <div class="progress-fill" style="width: 0%"></div>
                 </div>
             </div>
 
-            <button id="btn-settings" class="icon-btn" aria-label="Reader Settings">
+            <button id="btn-settings" class="icon-btn" aria-label="Settings">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="3"></circle>
                     <path
@@ -61,23 +52,61 @@
             </button>
         </header>
 
-        <!-- Main Reading Area (epubjs injects here OR pdf.js canvas) -->
-        <main class="book-viewer">
-            <button id="prev-page" class="nav-btn prev fade" aria-label="Previous Page">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="15 18 9 12 15 6"></polyline>
-                </svg>
+        <!-- Fallback Embed Controls (Plan C) -->
+        <div id="embed-fallback-bar" class="hidden"
+            style="background:var(--warning); color:#000; padding:8px; text-align:center; font-size:0.9rem; font-weight:600;">
+            Görüntü yüklenmediyse:
+            <button id="btn-fallback-server" class="btn primary"
+                style="padding:4px 8px; font-size:0.8rem; margin-left:10px; background:#000; color:#fff;">
+                Alternatif Sunucuyu Dene (Plan C)
             </button>
-            <div id="viewer" class="epub-container relative">
-                <!-- PDF Canvas & Text Layer inside -->
+        </div>
+
+        <!-- Main Reading Area (Multi-Layer) -->
+        <main class="book-viewer relative" id="main-viewer">
+
+            <!-- LAYER A: LOCAL BOOKS (EPUB/PDF) -->
+            <div id="local-viewer-layer" class="epub-container relative hidden">
+                <button id="prev-page" class="nav-btn prev fade" aria-label="Previous">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+                <div id="epub-render-target"></div>
                 <canvas id="pdf-canvas" class="hidden"></canvas>
+                <button id="next-page" class="nav-btn next fade" aria-label="Next">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
             </div>
-            <button id="next-page" class="nav-btn next fade" aria-label="Next Page">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-            </button>
+
+            <!-- LAYER B/C: EMBED VIEWER (Archive / OpenLibrary) -->
+            <iframe id="embed-viewer" class="hidden" style="width:100%; height:100%; border:none;"
+                allowfullscreen></iframe>
+
+            <!-- LAYER D: ERROR / AUDIO ONLY -->
+            <div id="error-viewer" class="hidden"
+                style="display:flex; height:100%; align-items:center; justify-content:center; flex-direction:column; text-align:center;">
+                <h2 id="error-title">📖 Kitap Önizlemeye Kapalı</h2>
+                <p id="error-desc" style="color:var(--text-secondary); margin-top:10px;">Lütfen farklı bir kitap veya
+                    sesli versiyon seçin.</p>
+            </div>
+
         </main>
+
+        <!-- Combo Audio Player (Bottom Fixed) -->
+        <section id="audio-player-deck" class="audio-deck glass-panel hidden">
+            <div class="audio-controls">
+                <audio id="combo-audio" controls crossorigin="anonymous"></audio>
+                <div class="speed-controls">
+                    <span class="speed-label">Hız:</span>
+                    <button class="btn text-btn speed-btn" data-speed="0.75">0.75x</button>
+                    <button class="btn text-btn speed-btn active" data-speed="1.0">1x</button>
+                    <button class="btn text-btn speed-btn" data-speed="1.25">1.25x</button>
+                </div>
+            </div>
+        </section>
     </div>
 
     <!-- Smart Dictionary Modal -->
@@ -92,32 +121,15 @@
                     </svg>
                 </button>
             </div>
-
             <div class="dict-phonetic" id="dict-phonetic">/wɜːd/</div>
-
             <div class="dict-body">
                 <p id="dict-definition" class="definition">Loading definition...</p>
-                <div class="context-box">
-                    <strong>Context:</strong>
-                    <i id="dict-context">...</i>
-                </div>
+                <div class="context-box"><strong>Context:</strong><i id="dict-context">...</i></div>
             </div>
-
             <div class="modal-actions">
                 <button id="dict-save" class="btn primary full-width">Save to Flashcards</button>
                 <button id="dict-close" class="btn text-btn full-width">Close</button>
             </div>
-        </div>
-    </div>
-
-    <!-- Premium Required Modal -->
-    <div id="premium-modal" class="dict-modal hidden">
-        <div class="modal-content glass-panel" style="text-align: center;">
-            <div style="font-size: 3rem; margin-bottom: 1rem;">👑</div>
-            <h3 style="color:var(--warning); margin-bottom: 0.5rem;">Premium Required</h3>
-            <p style="color:var(--text-secondary); margin-bottom: 1.5rem;">You need a Premium plan to use Dictionary and
-                text-to-speech features.</p>
-            <button id="premium-close" class="btn primary full-width">Understood</button>
         </div>
     </div>
 

@@ -1,77 +1,113 @@
 /**
- * Application Core Logic V2 (Dashboard focus)
+ * Application Core Logic V3.4 (Global Language & PWA Onboarding)
  */
 
+let currentTypeFilter = 'all';
+let currentLevelFilter = 'all';
+let lastSearchResults = [];
+
+// PWA Install Prompt State
+let deferredPrompt;
+
 document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Initialize PWA Service Worker
+    initPWAInstallLogic();
+
     if ('serviceWorker' in navigator) {
-        try {
-            await navigator.serviceWorker.register('sw.js');
-        } catch (error) {
-            console.log('SW registration failed:', error);
-        }
+        try { await navigator.serviceWorker.register('sw.js'); }
+        catch (e) { console.log('SW error:', e); }
     }
 
-    // 2. Global State Display
-    const accountStatus = document.getElementById('account-status');
-    if (accountStatus) {
-        if (window.globals.isPremium) {
-            accountStatus.innerHTML = '👑 Premium';
-            accountStatus.style.color = 'var(--warning)';
-        } else {
-            accountStatus.innerHTML = 'Free Plan';
-            accountStatus.style.color = 'var(--text-secondary)';
-        }
-    }
-
-    // 3. Initialize DB and load Dashboard Data
     if (document.querySelector('.dashboard-content')) {
-        await checkLocalUploadLimits();
         await loadDashboardStats();
         setupFileUpload();
+        populateLanguageFilters();
         setupSearch();
+        setupFilters();
     }
 });
 
-async function checkLocalUploadLimits() {
-    if (!window.dbAPI) return;
+// ==========================================
+// V3.4 PWA ONBOARDING LOGIC
+// ==========================================
+function initPWAInstallLogic() {
+    const banner = document.getElementById('pwa-install-banner');
+    const layout = document.getElementById('main-layout');
+    const btnInstall = document.getElementById('btn-install-pwa');
+    const btnDismiss = document.getElementById('btn-dismiss-install');
+    const instructions = document.getElementById('install-instructions');
 
-    const count = await window.dbAPI.getLocalBookCount();
-    const countEl = document.getElementById('local-uploads-count');
-    if (countEl) countEl.innerHTML = `${count} <span id="local-uploads-limit">/ ${window.globals.isPremium ? '∞' : '1'}</span>`;
+    if (!banner) return;
 
-    const uploadLabel = document.getElementById('upload-label');
-    const notice = document.getElementById('premium-upload-notice');
-    const input = document.getElementById('epub-upload');
-
-    if (!window.globals.isPremium && count >= 1) {
-        if (uploadLabel) {
-            uploadLabel.style.opacity = '0.5';
-            uploadLabel.style.cursor = 'not-allowed';
-            uploadLabel.innerText = '👑 Limit Reached';
-        }
-        if (notice) notice.style.display = 'block';
-        if (input) input.disabled = true;
+    // Detect if already installed / standalone
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    if (isStandalone || localStorage.getItem('pwaDismissed')) {
+        return; // Don't show if already installed or dismissed
     }
+
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        // Prevent default mini-infobar
+        e.preventDefault();
+        // Stash the event so it can be triggered later.
+        deferredPrompt = e;
+
+        // Show our custom UI
+        showBanner();
+    });
+
+    // If it's iOS, 'beforeinstallprompt' never fires. Show manual instructions.
+    if (isIOS && !isStandalone) {
+        instructions.textContent = "iOS/Safari için: 'Paylaş' butonuna bas ve 'Ana Ekrana Ekle'yi seç.";
+        btnInstall.style.display = 'none'; // iOS has no programmatic trigger
+        showBanner();
+    }
+
+    function showBanner() {
+        banner.classList.remove('hidden');
+        if (layout) layout.style.paddingTop = '80px';
+    }
+
+    btnInstall.addEventListener('click', async () => {
+        banner.classList.add('hidden');
+        if (layout) layout.style.paddingTop = '0';
+
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                console.log('User accepted the PWA install prompt');
+            }
+            deferredPrompt = null;
+        }
+    });
+
+    btnDismiss.addEventListener('click', () => {
+        banner.classList.add('hidden');
+        if (layout) layout.style.paddingTop = '0';
+        localStorage.setItem('pwaDismissed', 'true');
+    });
 }
 
+
+// ==========================================
+// CORE DASHBOARD
+// ==========================================
 async function loadDashboardStats() {
     if (!window.dbAPI) return;
 
-    // Total words
     const words = await window.dbAPI.getAllWords();
     const totalEl = document.getElementById('total-words');
     if (totalEl) totalEl.textContent = words.length;
 
-    // Load Offline Books Shelf
     const db = await window.dbAPI.initDB();
     if (db) {
         const allBooks = await db.getAll('books');
         const shelf = document.getElementById('offline-books-grid');
         if (shelf && allBooks.length > 0) {
-            shelf.innerHTML = ''; // clear empty state
+            shelf.innerHTML = '';
             allBooks.forEach(b => {
-                const card = createBookCard(b.meta, true); // true = is offline
+                const card = createBookCard(b.meta, true);
                 card.addEventListener('click', () => openBook(b.id));
                 shelf.appendChild(card);
             });
@@ -82,15 +118,21 @@ async function loadDashboardStats() {
 function createBookCard(meta, isOffline = false) {
     const div = document.createElement('div');
     div.className = 'book-card glass-panel cursor-pointer';
+
+    let typeBadge = '';
+    if (meta.type === 'combo') typeBadge = `<div class="audio-badge combo-badge">🎧+📖 Combo</div>`;
+    else if (meta.type === 'audio') typeBadge = `<div class="audio-badge">🎧 Sesli</div>`;
+    else if (meta.type === 'text') typeBadge = `<div class="audio-badge text-badge">📖 Metin</div>`;
+
     div.innerHTML = `
         <div class="book-cover" style="background-image: url('${meta.cover || 'assets/librivox-cover.png'}')">
-             ${meta.language_level ? `<span class="level-badge">${meta.language_level}</span>` : ''}
-             ${meta.type === 'audio' ? `<div class="audio-badge">🎧 Audio</div>` : ''}
+             ${meta.language_level ? `<span class="level-badge">${meta.language_level.split(' ')[0]}</span>` : ''}
+             ${typeBadge}
         </div>
         <div class="book-meta">
             <h4 class="book-title truncate">${meta.title}</h4>
-            <p class="book-author truncate">${meta.author || 'Unknown'}</p>
-            ${isOffline ? `<span style="font-size:0.7rem;color:var(--success);">Available Offline</span>` : ''}
+            <p class="book-author truncate">${meta.author || 'Bilinmiyor'}</p>
+            ${isOffline ? `<span style="font-size:0.7rem;color:var(--success);">İndirilmiş</span>` : ''}
         </div>
     `;
     return div;
@@ -104,30 +146,19 @@ function setupFileUpload() {
         const file = e.target.files[0];
         if (!file) return;
 
-        // Enforce limit again just in case
-        const count = await window.dbAPI.getLocalBookCount();
-        if (!window.globals.isPremium && count >= 1) {
-            window.globals.checkPremiumAction('Unlimited Local Uploads');
-            return;
-        }
-
         const reader = new FileReader();
         reader.onload = async function (e) {
             const arrayBuffer = e.target.result;
             const bookId = `local_${Date.now()}`;
 
-            // Generate basic metadata
             const isPDF = file.name.toLowerCase().endsWith('.pdf');
             const metadata = {
                 title: file.name.replace(/\.[^/.]+$/, ""),
-                author: 'Local File',
-                type: isPDF ? 'pdf' : 'text',
-                category: 'Local'
+                author: 'Yerel Dosya',
+                type: isPDF ? 'pdf' : 'text'
             };
 
             await window.dbAPI.saveBook(bookId, arrayBuffer, metadata);
-
-            // Navigate to reader
             openBook(bookId);
         };
         reader.readAsArrayBuffer(file);
@@ -135,20 +166,68 @@ function setupFileUpload() {
 }
 
 function openBook(bookId) {
-    // We pass the bookId payload via localStorage for the reader to pick up
     localStorage.setItem('activeBookId', bookId);
     window.location.href = 'reader.html';
 }
 
 // ==========================================
-// SEARCH LOGIC (OpenLibrary + LibriVox)
+// SEARCH & FILTERS
 // ==========================================
+
+function populateLanguageFilters() {
+    const container = document.getElementById('filter-lang');
+    if (!container || !window.globals) return;
+
+    const langs = window.globals.SUPPORTED_LANGS;
+    const currentActive = window.globals.activeContentLang;
+
+    for (const [key, langObj] of Object.entries(langs)) {
+        const btn = document.createElement('button');
+        btn.className = `btn filter-btn ${key === currentActive ? 'active' : ''}`;
+        btn.setAttribute('data-val', key);
+        btn.textContent = langObj.label;
+        btn.onclick = () => {
+            container.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            window.globals.setContentLanguage(key);
+            document.getElementById('search-results-grid').innerHTML = '<p class="empty-state">Dil değiştirildi. Lütfen yeniden arama yapın.</p>';
+            lastSearchResults = [];
+        };
+        container.appendChild(btn);
+    }
+}
+
+function setupFilters() {
+    setupFilterGroup('filter-type', val => {
+        currentTypeFilter = val;
+        renderFilteredResults();
+    });
+
+    setupFilterGroup('filter-level', val => {
+        currentLevelFilter = val;
+        renderFilteredResults();
+    });
+}
+
+function setupFilterGroup(groupId, onChange) {
+    const container = document.getElementById(groupId);
+    if (!container) return;
+    const btns = container.querySelectorAll('.filter-btn');
+
+    btns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            btns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            onChange(btn.getAttribute('data-val'));
+        });
+    });
+}
+
 let searchTimeout;
 function setupSearch() {
     const input = document.getElementById('omni-search');
     const closeBtn = document.getElementById('close-search');
     const resultsContainer = document.getElementById('search-results-container');
-    const resultsGrid = document.getElementById('search-results-grid');
     const spinner = document.getElementById('search-spinner');
 
     if (!input) return;
@@ -165,41 +244,13 @@ function setupSearch() {
         if (spinner) spinner.classList.remove('hidden');
 
         searchTimeout = setTimeout(async () => {
-            // Concurrent search
-            const [textRes, audioRes] = await Promise.all([
-                window.libraryAPI.searchOpenLibrary(query),
-                window.libraryAPI.searchLibriVox(query)
-            ]);
-
-            const combined = [...textRes, ...audioRes];
-
-            resultsGrid.innerHTML = '';
-            if (combined.length === 0) {
-                resultsGrid.innerHTML = '<p class="empty-state">No results found.</p>';
-            } else {
-                combined.forEach(meta => {
-                    const card = createBookCard(meta);
-                    card.addEventListener('click', () => {
-                        // For network books, we either download and save, or pass URL directly
-                        // Since OpenLibrary doesn't always provide raw text, usually we'd link to reader.
-                        // For this simulation, we'll alert that network reader isn't fully wired for raw files yet
-                        // unless it's a direct PDF link.
-                        if (meta.type === 'audio') {
-                            // Route to audio player / open new tab
-                            alert(`Opening Audiobook: ${meta.title}`);
-                            if (meta.project_url) window.open(meta.project_url, '_blank');
-                        } else {
-                            alert(`This is a library catalog entry. To read it, download the EPUB/PDF from OpenLibrary and use Local Upload.`);
-                        }
-                    });
-                    resultsGrid.appendChild(card);
-                });
-            }
+            lastSearchResults = await window.libraryAPI.searchCombined(query);
 
             if (spinner) spinner.classList.add('hidden');
             resultsContainer.classList.remove('hidden');
 
-        }, 800); // debounce 800ms
+            renderFilteredResults();
+        }, 800);
     });
 
     if (closeBtn) {
@@ -208,4 +259,33 @@ function setupSearch() {
             input.value = '';
         });
     }
+}
+
+function renderFilteredResults() {
+    const resultsGrid = document.getElementById('search-results-grid');
+    if (!resultsGrid) return;
+
+    const filtered = lastSearchResults.filter(item => {
+        if (currentTypeFilter !== 'all' && item.type !== currentTypeFilter) return false;
+        if (currentLevelFilter !== 'all' && !item.language_level.includes(currentLevelFilter)) return false;
+        return true;
+    });
+
+    resultsGrid.innerHTML = '';
+
+    if (filtered.length === 0) {
+        resultsGrid.innerHTML = '<p class="empty-state">Bu dilde / filtrede eşleşen sonuç bulunamadı.</p>';
+    } else {
+        filtered.forEach(meta => {
+            const card = createBookCard(meta);
+            card.addEventListener('click', () => setupNetworkReader(meta));
+            resultsGrid.appendChild(card);
+        });
+    }
+}
+
+async function setupNetworkReader(meta) {
+    const bookId = `net_${Date.now()}`;
+    await window.dbAPI.saveBook(bookId, null, meta);
+    openBook(bookId);
 }

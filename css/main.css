@@ -1,6 +1,6 @@
 /**
- * Main Stylesheet - English Reader PWA V2
- * Includes Search, Grids, and Premium Elements
+ * Main Stylesheet - English Reader PWA V3
+ * Maximum Accessibility & Hybrid Audio Player
  */
 
 :root {
@@ -14,15 +14,13 @@
 
     --accent-primary: #3B82F6;
     --accent-hover: #2563EB;
-    --accent-glow: rgba(59, 130, 246, 0.4);
 
     --success: #10B981;
     --warning: #F59E0B;
-    /* Gold for Premium */
-    --danger: #EF4444;
+    --combo: #8B5CF6;
+    /* Purple for Combos */
 
     --font-ui: 'Inter', sans-serif;
-    --font-serif: 'Merriweather', serif;
 
     --radius-sm: 6px;
     --radius-md: 12px;
@@ -62,7 +60,6 @@ h4 {
     text-overflow: ellipsis;
 }
 
-/* Utilities */
 .hidden {
     display: none !important;
 }
@@ -83,7 +80,7 @@ h4 {
     cursor: pointer;
 }
 
-/* Layouts */
+/* Layouts & Panels */
 .layout {
     max-width: 800px;
     margin: 0 auto;
@@ -95,36 +92,6 @@ h4 {
     border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: var(--radius-md);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-}
-
-/* Nav & Badges */
-.top-nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 0;
-}
-
-.brand h1 {
-    font-size: 1.5rem;
-}
-
-.brand span {
-    color: var(--accent-primary);
-}
-
-.actions {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.badge {
-    font-size: 0.85rem;
-    font-weight: 600;
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-    background: rgba(255, 255, 255, 0.05);
 }
 
 /* Buttons */
@@ -160,7 +127,17 @@ h4 {
 .btn.text-btn {
     background: transparent;
     color: var(--accent-primary);
-    padding: 0;
+    padding: 0.25rem 0.5rem;
+}
+
+.btn.text-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+.btn.text-btn.active {
+    background: rgba(59, 130, 246, 0.2);
+    color: white;
 }
 
 .full-width {
@@ -180,7 +157,31 @@ h4 {
     display: none;
 }
 
-/* Omni Search */
+/* Dashboard UI */
+.top-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+}
+
+.brand h1 {
+    font-size: 1.5rem;
+}
+
+.brand span {
+    color: var(--accent-primary);
+}
+
+.badge {
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Search & Filters */
 .search-section {
     padding: var(--spacing-3) var(--spacing-4);
     margin-bottom: var(--spacing-4);
@@ -222,7 +223,43 @@ h4 {
     }
 }
 
-/* Stats */
+.search-filters {
+    font-size: 0.9rem;
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.filter-label {
+    color: var(--text-muted);
+    font-weight: 500;
+    min-width: 50px;
+}
+
+.filter-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    background: var(--bg-surface);
+    color: var(--text-secondary);
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+    border-radius: 20px;
+}
+
+.filter-btn.active {
+    background: var(--accent-primary);
+    color: white;
+}
+
+/* Book Shelves */
 .stats-overview {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -247,13 +284,6 @@ h4 {
     color: white;
 }
 
-#local-uploads-limit {
-    font-size: 1rem;
-    color: var(--text-muted);
-    font-weight: normal;
-}
-
-/* Book Shelves (Horizontal Scroll) */
 .library-shelf {
     margin-bottom: 2rem;
 }
@@ -283,7 +313,6 @@ h4 {
     padding: 1rem;
 }
 
-/* Book Cards */
 .book-card {
     flex: 0 0 140px;
     scroll-snap-align: start;
@@ -321,7 +350,6 @@ h4 {
     color: var(--text-secondary);
 }
 
-/* Badges on covers */
 .level-badge {
     position: absolute;
     top: 8px;
@@ -332,7 +360,6 @@ h4 {
     font-weight: bold;
     padding: 2px 6px;
     border-radius: 4px;
-    backdrop-filter: blur(4px);
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -340,15 +367,20 @@ h4 {
     position: absolute;
     bottom: 8px;
     left: 8px;
-    background: rgba(59, 130, 246, 0.9);
-    color: white;
     font-size: 0.65rem;
     font-weight: bold;
     padding: 2px 6px;
     border-radius: 4px;
+    color: white;
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-/* Empty States */
+.audio-badge.combo-badge {
+    background: var(--combo);
+    border-color: var(--combo);
+}
+
 .empty-state {
     color: var(--text-muted);
     font-size: 0.9rem;
@@ -358,18 +390,20 @@ h4 {
     padding: 2rem 0;
 }
 
-/* Action Sections */
 .action-section {
     padding: var(--spacing-4);
     margin-bottom: 2rem;
 }
 
-/* Modal & Reader Base (from V1) */
-.reader-container {
+/* ====================================================
+   HYBRID READER UI (V3 Sync View)
+   ==================================================== */
+.reader-wrapper {
     display: flex;
     flex-direction: column;
     height: 100vh;
     background: #000;
+    overflow: hidden;
 }
 
 .reader-toolbar {
@@ -379,7 +413,6 @@ h4 {
     padding: 0.5rem 1rem;
     background: var(--bg-panel);
     z-index: 10;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .book-info {
@@ -452,7 +485,46 @@ h4 {
     max-height: 100%;
 }
 
-/* Dict / Premium Modal */
+/* AUDIO COMBO DECK */
+.audio-deck {
+    flex-shrink: 0;
+    /* Sticky to bottom */
+    padding: 1rem;
+    background: var(--bg-panel);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 20;
+}
+
+.audio-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    max-width: 600px;
+}
+
+.audio-controls audio {
+    width: 100%;
+    outline: none;
+    border-radius: 40px;
+}
+
+.speed-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+}
+
+.speed-label {
+    color: var(--text-muted);
+}
+
+/* DICTIONARY MODAL */
 .dict-modal {
     position: fixed;
     inset: 0;
@@ -463,12 +535,6 @@ h4 {
     justify-content: center;
     padding: 1rem;
     z-index: 100;
-    transition: 0.2s;
-}
-
-.dict-modal.hidden {
-    opacity: 0;
-    pointer-events: none;
 }
 
 .modal-content {
@@ -508,7 +574,7 @@ h4 {
     gap: 0.5rem;
 }
 
-/* Scroll */
+/* Scrollbars */
 ::-webkit-scrollbar {
     width: 6px;
     height: 6px;

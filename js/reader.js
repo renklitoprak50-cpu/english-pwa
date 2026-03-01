@@ -1,32 +1,22 @@
 /**
- * Reader Component Logic V2
- * Handles EPUB and PDF rendering, Cloud bounds, and Premium Checks (TTS + Dict)
+ * Reader Component Logic V3.4 (Fail-Safe Stabilization API)
  */
 
 let currentBookMeta = null;
 let currentWordData = null;
 
-// EPUB state
 let epubBook = null;
 let epubRendition = null;
-
-// PDF state
 let pdfDoc = null;
 let pdfPageNum = 1;
 let pdfCanvas = null;
 let pdfCtx = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
-    const viewer = document.getElementById('viewer');
-    if (!viewer) return;
-
     setupControls();
+    setupAudioPlayer();
 
     document.getElementById('dict-play').addEventListener('click', () => {
-        if (!window.globals.checkPremiumAction('Text-to-Speech')) {
-            showPremiumModal();
-            return;
-        }
         if (currentWordData && currentWordData.word && window.speechAPI) {
             window.speechAPI.speak(currentWordData.word, 0.9);
         }
@@ -34,7 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const bookId = localStorage.getItem('activeBookId');
     if (!bookId) {
-        alert("No book selected.");
+        alert("Lütfen kütüphaneden bir kitap seçin.");
         window.location.href = 'index.html';
         return;
     }
@@ -47,20 +37,119 @@ document.addEventListener('DOMContentLoaded', async () => {
             currentBookMeta = bookData.meta;
             document.getElementById('book-title').textContent = currentBookMeta.title;
 
-            if (currentBookMeta.type === 'pdf') {
-                initPDFReader(bookData.data);
+            if (currentBookMeta.audio_url) {
+                initAudioPlayer(currentBookMeta.audio_url);
+            }
+
+            if (bookData.data) {
+                document.getElementById('local-viewer-layer').classList.remove('hidden');
+                document.getElementById('book-progress').classList.remove('hidden');
+                if (currentBookMeta.type === 'pdf') initPDFReader(bookData.data);
+                else initEpubReader(bookData.data);
+
+            } else if (currentBookMeta.ia_id) {
+                initEmbedReader(currentBookMeta.ia_id);
+            } else if (currentBookMeta.audio_url) {
+                document.getElementById('error-viewer').classList.remove('hidden');
+                document.getElementById('error-title').textContent = "🎧 Sadece Sesli Kitap";
+                document.getElementById('error-desc').textContent = "Dinlemek için aşağıdaki oynatıcıyı kullanın.";
             } else {
-                initEpubReader(bookData.data);
+                document.getElementById('error-viewer').classList.remove('hidden');
             }
         } else {
-            alert("Book data not found locally.");
+            alert("Kitap verisi bulunamadı.");
             window.location.href = 'index.html';
         }
     } catch (err) {
-        console.error("Error loading book:", err);
+        console.error("Kitap yükleme hatası:", err);
     }
 });
 
+// =====================================
+// EMBED LAYER (PLANS B & C) - V3.4
+// =====================================
+function initEmbedReader(ia_id) {
+    const iframe = document.getElementById('embed-viewer');
+    const fallbackBar = document.getElementById('embed-fallback-bar');
+    const fallbackBtn = document.getElementById('btn-fallback-server');
+
+    document.getElementById('local-viewer-layer').classList.add('hidden');
+    document.getElementById('book-progress').classList.add('hidden');
+
+    iframe.classList.remove('hidden');
+    fallbackBar.classList.remove('hidden');
+
+    // Fallback UI State Reset
+    fallbackBar.style.background = 'var(--warning)';
+    fallbackBar.style.color = '#000';
+    fallbackBar.innerHTML = `
+        Görüntü yüklenmediyse: 
+        <button id="btn-fallback-server" class="btn primary" style="padding:4px 8px; font-size:0.8rem; margin-left:10px; background:#000; color:#fff;">
+            Alternatif Sunucuyu Dene (Plan C)
+        </button>
+    `;
+
+    // V3.4: Reconnect listener due to innerHTML reset
+    const newFallbackBtn = document.getElementById('btn-fallback-server');
+
+    // Archive.org (Plan B)
+    iframe.src = `https://archive.org/embed/${ia_id}?ui=embed`;
+
+    // Auto hint transition after 6 seconds
+    let hintTimeout = setTimeout(() => {
+        if (newFallbackBtn) newFallbackBtn.style.animation = 'pulse 1.5s infinite';
+    }, 6000);
+
+    // Manual click: Fallback to OpenLibrary (Plan C)
+    newFallbackBtn.addEventListener('click', () => {
+        clearTimeout(hintTimeout);
+        newFallbackBtn.textContent = "Alternatif Yükleniyor...";
+        newFallbackBtn.disabled = true;
+        newFallbackBtn.style.animation = 'none';
+        iframe.src = `https://openlibrary.org/embed/${ia_id}`;
+
+        // Deep fail detection (Plan D)
+        setTimeout(() => {
+            newFallbackBtn.textContent = "Hala çalışmıyor mu? İptal Et (Plan D)";
+            newFallbackBtn.disabled = false;
+            newFallbackBtn.onclick = () => {
+                iframe.classList.add('hidden');
+                fallbackBar.classList.add('hidden');
+                document.getElementById('error-viewer').classList.remove('hidden');
+            };
+        }, 3500);
+    });
+}
+
+// =====================================
+// AUDIO PLAYER LOGIC
+// =====================================
+function initAudioPlayer(url) {
+    const deck = document.getElementById('audio-player-deck');
+    const audioEl = document.getElementById('combo-audio');
+    if (deck && audioEl) {
+        deck.classList.remove('hidden');
+        audioEl.src = url;
+    }
+}
+
+function setupAudioPlayer() {
+    const audioEl = document.getElementById('combo-audio');
+    const speedBtns = document.querySelectorAll('.speed-btn');
+    if (!audioEl || speedBtns.length === 0) return;
+
+    speedBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            speedBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            audioEl.playbackRate = parseFloat(btn.getAttribute('data-speed'));
+        });
+    });
+}
+
+// =====================================
+// STANDARD CONTROLS (Common)
+// =====================================
 function setupControls() {
     document.getElementById('btn-back')?.addEventListener('click', () => window.location.href = 'index.html');
 
@@ -75,18 +164,14 @@ function setupControls() {
     });
 
     document.getElementById('dict-save')?.addEventListener('click', async (e) => {
-        if (!window.globals.checkPremiumAction('Unlimited Flashcards')) {
-            showPremiumModal();
-            return;
-        }
         if (currentWordData) {
             await window.dbAPI.saveWord(
                 currentWordData.word, currentWordData.context, currentWordData.definitionData
             );
-            e.target.textContent = 'Saved!';
+            e.target.textContent = 'Kaydedildi!';
             e.target.style.background = 'var(--success)';
             setTimeout(() => {
-                e.target.textContent = 'Save to Flashcards';
+                e.target.textContent = 'Kelime Kartını Kaydet';
                 e.target.style.background = '';
                 closeDictModal();
             }, 1000);
@@ -94,11 +179,10 @@ function setupControls() {
     });
 
     document.getElementById('dict-close')?.addEventListener('click', closeDictModal);
-    document.getElementById('premium-close')?.addEventListener('click', () => document.getElementById('premium-modal').classList.add('hidden'));
 }
 
 // =====================================
-// PDF JS Logic
+// PLAN A: PDF JS Logic
 // =====================================
 function initPDFReader(arrayBuffer) {
     document.getElementById('pdf-canvas').style.display = 'block';
@@ -108,27 +192,17 @@ function initPDFReader(arrayBuffer) {
     const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
     loadingTask.promise.then(function (pdf) {
         pdfDoc = pdf;
-
-        // Restore progress
         window.dbAPI.getProgress('currentBook').then(prog => {
             if (prog && prog.location) pdfPageNum = parseInt(prog.location);
             renderPDFPage(pdfPageNum);
         });
-    }, function (reason) {
-        console.error(reason);
-    });
+    }, function (reason) { });
 
-    // Mock PDF click logic (Since PDF.js paints to canvas, actual text selection requires the TextLayerBuilder. 
-    // For this lightweight Vanilla PWA, we'll listen for highlights if they select text manually 
-    // or simulate a double click if we build a text overlay).
-    // For simplicity & performance, we listen to standard window selection.
     document.addEventListener("dblclick", () => {
         const selection = window.getSelection();
         if (!selection) return;
         const text = selection.toString().trim();
-        if (text && text.length > 0) {
-            handleWordSelection(text, "PDF Context capturing requires full text-layer, extracting selected word.");
-        }
+        if (text && text.length > 0) handleWordSelection(text, "PDF: Tam bağlam okunamadı.");
     });
 }
 
@@ -138,10 +212,7 @@ function renderPDFPage(num) {
         pdfCanvas.height = viewport.height;
         pdfCanvas.width = viewport.width;
 
-        const renderContext = {
-            canvasContext: pdfCtx,
-            viewport: viewport
-        };
+        const renderContext = { canvasContext: pdfCtx, viewport: viewport };
         page.render(renderContext);
 
         window.dbAPI.saveProgress('currentBook', num.toString());
@@ -160,17 +231,16 @@ function pdfNextPage() {
 }
 
 // =====================================
-// EPUB JS Logic
+// PLAN A: EPUB JS Logic
 // =====================================
 function initEpubReader(arrayBuffer) {
     document.getElementById('pdf-canvas').style.display = 'none';
     epubBook = ePub(arrayBuffer);
 
-    epubRendition = epubBook.renderTo("viewer", {
+    epubRendition = epubBook.renderTo("epub-render-target", {
         width: "100%", height: "100%", spread: "none"
     });
 
-    // load progress
     window.dbAPI.getProgress('currentBook').then(prog => {
         if (prog && prog.location) epubRendition.display(prog.location);
         else epubRendition.display();
@@ -192,12 +262,10 @@ function initEpubReader(arrayBuffer) {
             if (!selection) return;
             const text = selection.toString().trim();
             if (text && text.length > 0) {
-                // extract context
                 let node = selection.anchorNode;
                 let context = "";
                 while (node && node.nodeName !== 'P' && node.nodeName !== 'DIV') node = node.parentNode;
                 if (node) context = node.textContent.trim().substring(0, 150) + "...";
-
                 handleWordSelection(text, context);
             }
         });
@@ -205,46 +273,41 @@ function initEpubReader(arrayBuffer) {
 }
 
 // =====================================
-// DICTIONARY / SAAS GATING
+// DICTIONARY (V4)
 // =====================================
-
 async function handleWordSelection(word, context) {
     word = word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
     if (word.length < 2) return;
 
-    // SaaS PREMIUM CHECK
-    if (!window.globals.checkPremiumAction('Smart Dictionary Translation')) {
-        showPremiumModal();
-        return;
-    }
-
     currentWordData = { word, context, definitionData: null };
     openDictModal(word);
 
-    const defData = await window.dictionaryAPI.fetchDefinition(word);
+    const transData = await window.dictionaryAPI.fetchDefinition(word);
 
-    if (defData && !defData.error) {
-        currentWordData.definitionData = defData;
+    if (transData && !transData.error) {
+        currentWordData.definitionData = transData;
         const phoneticEl = document.getElementById('dict-phonetic');
         const defEl = document.getElementById('dict-definition');
 
-        let phonetic = defData.phonetic || (defData.phonetics[0] ? defData.phonetics[0].text : '');
-        phoneticEl.textContent = phonetic || "(no phonetic available)";
+        phoneticEl.textContent = transData.phonetic || `[${window.globals.activeContentLang.toUpperCase()}]`;
+        defEl.textContent = transData.translation;
 
-        try { defEl.textContent = defData.meanings[0].definitions[0].definition; }
-        catch (e) { defEl.textContent = "Could not parse definition."; }
+        if (transData.match < 0.5) {
+            document.getElementById('dict-context').textContent = `(Düşük Güvenilirlik Çevirisi) "${context}"`;
+        } else {
+            document.getElementById('dict-context').textContent = `"${context}"`;
+        }
     } else {
-        document.getElementById('dict-definition').textContent = "Word not found in dictionary.";
+        document.getElementById('dict-definition').textContent = "Çeviri bulunamadı.";
         document.getElementById('dict-phonetic').textContent = "";
+        document.getElementById('dict-context').textContent = `"${context}"`;
     }
-
-    document.getElementById('dict-context').textContent = `"${context}"`;
 }
 
 function openDictModal(word) {
     const modal = document.getElementById('dict-modal');
     document.getElementById('dict-word').textContent = word;
-    document.getElementById('dict-definition').textContent = "Loading definition...";
+    document.getElementById('dict-definition').textContent = "Çevriliyor...";
     document.getElementById('dict-context').textContent = "...";
     document.getElementById('dict-phonetic').textContent = "...";
     modal.classList.remove('hidden');
@@ -254,8 +317,4 @@ function closeDictModal() {
     document.getElementById('dict-modal').classList.add('hidden');
     currentWordData = null;
     if (window.speechAPI) window.speechAPI.stop();
-}
-
-function showPremiumModal() {
-    document.getElementById('premium-modal').classList.remove('hidden');
 }

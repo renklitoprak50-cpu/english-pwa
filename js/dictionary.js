@@ -1,35 +1,41 @@
-const DICTIONARY_API_BASE = 'https://api.dictionaryapi.dev/api/v2/entries/en/';
-
 /**
- * Fetches the definition of a word from the Free Dictionary API.
- * @param {string} word - The word to look up.
- * @returns {Promise<Object|null>} The parsed definition data or null if not found.
+ * MyMemory Translation API Wrapper V4
+ * Translates from currently selected language directly to Turkish (or English fallback).
  */
-async function fetchDefinition(word) {
+
+const MYMEMORY_API_BASE = 'https://api.mymemory.translated.net/get?q=';
+
+async function fetchTranslation(word) {
+    if (!word) return null;
     try {
-        // Clean word: remove punctuation
-        const cleanWord = word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "").trim().toLowerCase();
+        // Build the language pair using the global V4 Language State
+        const map = window.globals.getActiveLanguageMap();
+        const sourceLang = map.mymem;
+        const targetLang = 'tr'; // Translate everything to Turkish per user request
 
-        if (!cleanWord) return null;
+        const url = `${MYMEMORY_API_BASE}${encodeURIComponent(word)}&langpair=${sourceLang}|${targetLang}`;
 
-        const response = await fetch(`${DICTIONARY_API_BASE}${cleanWord}`);
+        const res = await fetch(url);
+        const data = await res.json();
 
-        if (!response.ok) {
-            if (response.status === 404) {
-                console.log(`Word not found in dictionary: ${cleanWord}`);
-                return { error: 'Not found', word: cleanWord };
-            }
-            throw new Error(`HTTP error! status: ${response.status}`);
+        if (data.responseStatus === 200 && data.responseData.translatedText) {
+            return {
+                word: word,
+                translation: data.responseData.translatedText,
+                phonetic: `[${sourceLang.toUpperCase()}]`,
+                source_lang: sourceLang,
+                match: data.responseData.match
+            };
         }
 
-        const data = await response.json();
-        return data[0]; // The API returns an array of entries, we usually just need the first one
-    } catch (error) {
-        console.error('Error fetching definition:', error);
-        return null;
+        return { error: "Translation not found." };
+
+    } catch (err) {
+        console.error("MyMemory Translation API error:", err);
+        return { error: "Network error occurred." };
     }
 }
 
 window.dictionaryAPI = {
-    fetchDefinition
+    fetchDefinition: fetchTranslation // kept original name for backward compatibility with older saving logic
 };
