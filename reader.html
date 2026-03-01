@@ -4,27 +4,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reader | English PWA</title>
+    <title>Reader | English PWA V2</title>
 
-    <!-- PWA -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#121212">
 
-    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&display=swap"
         rel="stylesheet">
 
-    <!-- Styles -->
     <link rel="stylesheet" href="css/main.css">
 
-    <!-- Libraries -->
+    <!-- Core DB & Globals -->
+    <script src="js/globals.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/idb@7/build/umd.js"></script>
-    <!-- epubjs needs jszip -->
+
+    <!-- ePubJS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
+
+    <!-- PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+    </script>
 </head>
 
 <body class="dark-theme reader-mode">
@@ -56,14 +61,17 @@
             </button>
         </header>
 
-        <!-- Main Reading Area (epubjs injects here) -->
+        <!-- Main Reading Area (epubjs injects here OR pdf.js canvas) -->
         <main class="book-viewer">
             <button id="prev-page" class="nav-btn prev fade" aria-label="Previous Page">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="15 18 9 12 15 6"></polyline>
                 </svg>
             </button>
-            <div id="viewer" class="epub-container"></div>
+            <div id="viewer" class="epub-container relative">
+                <!-- PDF Canvas & Text Layer inside -->
+                <canvas id="pdf-canvas" class="hidden"></canvas>
+            </div>
             <button id="next-page" class="nav-btn next fade" aria-label="Next Page">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="9 18 15 12 9 6"></polyline>
@@ -91,7 +99,7 @@
                 <p id="dict-definition" class="definition">Loading definition...</p>
                 <div class="context-box">
                     <strong>Context:</strong>
-                    <i id="dict-context">"This is the sentence where the word appeared."</i>
+                    <i id="dict-context">...</i>
                 </div>
             </div>
 
@@ -102,11 +110,20 @@
         </div>
     </div>
 
-    <!-- Core Scripts -->
+    <!-- Premium Required Modal -->
+    <div id="premium-modal" class="dict-modal hidden">
+        <div class="modal-content glass-panel" style="text-align: center;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">👑</div>
+            <h3 style="color:var(--warning); margin-bottom: 0.5rem;">Premium Required</h3>
+            <p style="color:var(--text-secondary); margin-bottom: 1.5rem;">You need a Premium plan to use Dictionary and
+                text-to-speech features.</p>
+            <button id="premium-close" class="btn primary full-width">Understood</button>
+        </div>
+    </div>
+
     <script src="js/db.js"></script>
     <script src="js/dictionary.js"></script>
     <script src="js/speech.js"></script>
-    <script src="js/app.js"></script>
     <script src="js/reader.js"></script>
 </body>
 

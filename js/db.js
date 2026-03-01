@@ -1,5 +1,5 @@
 // Wraps IndexedDB using the idb library
-const DB_NAME = 'EnglishReaderDB';
+const DB_NAME = 'EnglishReaderDB_V2';
 const DB_VERSION = 1;
 
 let dbPromise;
@@ -15,16 +15,19 @@ async function initDB() {
 
     dbPromise = idb.openDB(DB_NAME, DB_VERSION, {
         upgrade(db) {
-            // Create a store for saved words
             if (!db.objectStoreNames.contains('words')) {
                 const store = db.createObjectStore('words', { keyPath: 'id', autoIncrement: true });
                 store.createIndex('word', 'word', { unique: false });
                 store.createIndex('timestamp', 'timestamp', { unique: false });
             }
 
-            // Create a store for reading progress (e.g. current location in book)
             if (!db.objectStoreNames.contains('progress')) {
                 db.createObjectStore('progress', { keyPath: 'bookId' });
+            }
+
+            // V2: Store actual Book ArrayBuffers for true offline
+            if (!db.objectStoreNames.contains('books')) {
+                db.createObjectStore('books', { keyPath: 'id' }); // id: 'local_upload_1' etc.
             }
         },
     });
@@ -39,7 +42,7 @@ async function saveWord(word, contextSentence, definitionData) {
     return db.put('words', {
         word: word.toLowerCase().trim(),
         context: contextSentence,
-        definition: definitionData, // Storing the full API response or a parsed version
+        definition: definitionData,
         timestamp: Date.now()
     });
 }
@@ -57,12 +60,12 @@ async function deleteWord(id) {
 }
 
 // Progress Operations
-async function saveProgress(bookId, cfiLocation) {
+async function saveProgress(bookId, locationOrPage) {
     const db = await initDB();
     if (!db) return;
     return db.put('progress', {
         bookId,
-        location: cfiLocation,
+        location: locationOrPage,
         lastRead: Date.now()
     });
 }
@@ -73,6 +76,38 @@ async function getProgress(bookId) {
     return db.get('progress', bookId);
 }
 
+// Book Storage Operations (True Offline)
+async function saveBook(id, arrayBuffer, metadata) {
+    const db = await initDB();
+    if (!db) return;
+    return db.put('books', {
+        id, // 'current_local_book' or 'librivox_x' 
+        data: arrayBuffer,
+        meta: metadata,
+        timestamp: Date.now()
+    });
+}
+
+async function getBook(id) {
+    const db = await initDB();
+    if (!db) return null;
+    return db.get('books', id);
+}
+
+async function deleteBook(id) {
+    const db = await initDB();
+    if (!db) return;
+    return db.delete('books', id);
+}
+
+// Track local upload count for Free users
+async function getLocalBookCount() {
+    const db = await initDB();
+    if (!db) return 0;
+    const allBooks = await db.getAll('books');
+    return allBooks.filter(b => b.id.startsWith('local_')).length;
+}
+
 // Expose globally
 window.dbAPI = {
     initDB,
@@ -80,5 +115,9 @@ window.dbAPI = {
     getAllWords,
     deleteWord,
     saveProgress,
-    getProgress
+    getProgress,
+    saveBook,
+    getBook,
+    deleteBook,
+    getLocalBookCount
 };

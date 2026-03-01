@@ -1,94 +1,128 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>English Reader PWA | Dashboard</title>
-    
-    <!-- PWA -->
+    <title>English Reader PWA | V2</title>
+
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#121212">
     <link rel="apple-touch-icon" href="assets/icon-192.png">
 
-    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Styles -->
+
     <link rel="stylesheet" href="css/main.css">
-    
-    <!-- Libraries -->
+
     <script src="https://cdn.jsdelivr.net/npm/idb@7/build/umd.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body class="dark-theme">
-    
+
     <div class="app-container dashboard layout">
         <header class="top-nav">
             <div class="brand">
                 <h1>Read<span>&Learn</span></h1>
             </div>
             <div class="actions">
+                <span id="account-status" class="badge">Checking...</span>
                 <button id="pwa-install-btn" class="btn secondary hidden" aria-label="Install App">Install App</button>
             </div>
         </header>
 
         <main class="dashboard-content">
-            <section class="welcome-section glass-panel">
-                <h2>Welcome back!</h2>
-                <p>Continue your English immersion journey.</p>
-                
-                <div class="file-upload-wrapper">
-                    <label for="epub-upload" class="upload-btn btn primary">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                        Upload EPUB to Read
-                    </label>
-                    <input type="file" id="epub-upload" accept=".epub" class="hidden-input">
+
+            <!-- Unified Search Bar -->
+            <section class="search-section glass-panel">
+                <div class="search-bar">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="omni-search" placeholder="Search Books or Audiobooks (e.g. Sherlock)">
+                    <div id="search-spinner" class="spinner hidden"></div>
                 </div>
             </section>
 
+            <div id="search-results-container" class="hidden glass-panel">
+                <div class="section-header">
+                    <h3>Search Results</h3>
+                    <button id="close-search" class="btn text-btn">Close</button>
+                </div>
+                <div class="books-grid" id="search-results-grid"></div>
+            </div>
+
+            <!-- Dashboard Stats -->
             <section class="stats-overview">
                 <div class="stat-card glass-panel">
-                    <div class="stat-icon vocabulary">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-                    </div>
                     <div class="stat-info">
                         <h3>Vocabulary Built</h3>
                         <p class="stat-number" id="total-words">0</p>
-                        <span class="stat-label">Saved Words</span>
                     </div>
                 </div>
 
                 <div class="stat-card glass-panel">
-                    <div class="stat-icon streak">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
-                    </div>
                     <div class="stat-info">
-                        <h3>Current Book</h3>
-                        <p class="stat-number" id="read-progress">0%</p>
-                        <span class="stat-label">Completion</span>
+                        <h3>Local Uploads</h3>
+                        <p class="stat-number" id="local-uploads-count">0 <span id="local-uploads-limit">/ 1</span></p>
                     </div>
                 </div>
             </section>
 
-            <section class="recent-words-section glass-panel">
-                <div class="section-header">
-                    <h3>Recent Flashcards</h3>
-                    <button class="btn text-btn" id="view-all-words">View All</button>
+            <!-- Upload Area -->
+            <section class="action-section glass-panel">
+                <h2 class="section-title">Upload Custom Book</h2>
+                <p class="section-desc">Upload an EPUB or PDF directly from your device.</p>
+                <div class="file-upload-wrapper mt-3">
+                    <label for="epub-upload" class="btn primary full-width upload-btn" id="upload-label">
+                        Choose EPUB/PDF
+                    </label>
+                    <input type="file" id="epub-upload" accept=".epub,.pdf" class="hidden-input">
                 </div>
-                <div class="words-list" id="words-list">
-                    <!-- Words injected here -->
-                    <div class="empty-state">
-                        <p>No words saved yet. Read a book to start building your vocabulary!</p>
+                <p class="premium-notice mt-2" id="premium-upload-notice"
+                    style="display:none; color: var(--warning); font-size: 0.9rem;">
+                    👑 Premium Required: You have reached the limit of 1 local upload on the Free tier.
+                </p>
+            </section>
+
+            <!-- Showcases -->
+            <section class="showcase-section">
+                <!-- Offline Library -->
+                <div class="library-shelf mt-4">
+                    <h2 class="section-title">My Offline Library</h2>
+                    <div class="books-horizontal" id="offline-books-grid">
+                        <div class="empty-state">No books saved for offline reading.</div>
                     </div>
                 </div>
+
+                <!-- OpenLibrary Selection -->
+                <div class="library-shelf mt-4 hidden">
+                    <h2 class="section-title">Classic Books<br><span
+                            style="font-size:0.8rem; color:var(--text-muted); font-weight:normal;">via
+                            OpenLibrary</span></h2>
+                    <div class="books-horizontal" id="openlibrary-grid"></div>
+                </div>
+
+                <!-- LibriVox Audiobooks -->
+                <div class="library-shelf mt-4 hidden">
+                    <h2 class="section-title">Listen & Read<br><span
+                            style="font-size:0.8rem; color:var(--text-muted); font-weight:normal;">via LibriVox</span>
+                    </h2>
+                    <div class="books-horizontal" id="librivox-grid"></div>
+                </div>
             </section>
+
         </main>
     </div>
 
     <!-- Core Scripts -->
+    <script src="js/globals.js"></script>
     <script src="js/db.js"></script>
+    <script src="js/library.js"></script>
     <script src="js/app.js"></script>
 </body>
+
 </html>

@@ -1,156 +1,211 @@
 /**
- * Application Core Logic (Dashboard focus)
+ * Application Core Logic V2 (Dashboard focus)
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
     // 1. Initialize PWA Service Worker
     if ('serviceWorker' in navigator) {
         try {
-            const registration = await navigator.serviceWorker.register('sw.js');
-            console.log('SW registered:', registration);
+            await navigator.serviceWorker.register('sw.js');
         } catch (error) {
             console.log('SW registration failed:', error);
         }
     }
 
-    // 2. Install Prompt Logic (Optional but good for PWA)
-    let deferredPrompt;
-    const installBtn = document.getElementById('pwa-install-btn');
-
-    window.addEventListener('beforeinstallprompt', (e) => {
-        // Prevent Chrome 67 and earlier from automatically showing the prompt
-        e.preventDefault();
-        deferredPrompt = e;
-
-        if (installBtn) {
-            installBtn.classList.remove('hidden');
-            installBtn.addEventListener('click', async () => {
-                installBtn.classList.add('hidden');
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                console.log(`User response to the install prompt: ${outcome}`);
-                deferredPrompt = null;
-            });
+    // 2. Global State Display
+    const accountStatus = document.getElementById('account-status');
+    if (accountStatus) {
+        if (window.globals.isPremium) {
+            accountStatus.innerHTML = '👑 Premium';
+            accountStatus.style.color = 'var(--warning)';
+        } else {
+            accountStatus.innerHTML = 'Free Plan';
+            accountStatus.style.color = 'var(--text-secondary)';
         }
-    });
+    }
 
     // 3. Initialize DB and load Dashboard Data
     if (document.querySelector('.dashboard-content')) {
+        await checkLocalUploadLimits();
         await loadDashboardStats();
         setupFileUpload();
+        setupSearch();
     }
 });
+
+async function checkLocalUploadLimits() {
+    if (!window.dbAPI) return;
+
+    const count = await window.dbAPI.getLocalBookCount();
+    const countEl = document.getElementById('local-uploads-count');
+    if (countEl) countEl.innerHTML = `${count} <span id="local-uploads-limit">/ ${window.globals.isPremium ? '∞' : '1'}</span>`;
+
+    const uploadLabel = document.getElementById('upload-label');
+    const notice = document.getElementById('premium-upload-notice');
+    const input = document.getElementById('epub-upload');
+
+    if (!window.globals.isPremium && count >= 1) {
+        if (uploadLabel) {
+            uploadLabel.style.opacity = '0.5';
+            uploadLabel.style.cursor = 'not-allowed';
+            uploadLabel.innerText = '👑 Limit Reached';
+        }
+        if (notice) notice.style.display = 'block';
+        if (input) input.disabled = true;
+    }
+}
 
 async function loadDashboardStats() {
     if (!window.dbAPI) return;
 
+    // Total words
     const words = await window.dbAPI.getAllWords();
-
-    // Update total count
     const totalEl = document.getElementById('total-words');
     if (totalEl) totalEl.textContent = words.length;
 
-    // Render Recent Words
-    const listEl = document.getElementById('words-list');
-    if (listEl) {
-        if (words.length === 0) {
-            // keep empty state
-        } else {
-            listEl.innerHTML = ''; // clear empty state
-            // show last 5 words
-            const recentWords = words.sort((a, b) => b.timestamp - a.timestamp).slice(0, 5);
-
-            recentWords.forEach(wData => {
-                const card = document.createElement('div');
-                card.className = 'word-card';
-                card.innerHTML = `
-                    <div class="word-primary">
-                        <span class="word-text">${wData.word}</span>
-                        <span class="word-def">${getShortDef(wData.definition)}</span>
-                        <span class="word-context">"${wData.context}"</span>
-                    </div>
-                    <div class="word-actions">
-                        <button class="icon-btn" onclick="playWord('${wData.word}')" aria-label="Play">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon></svg>
-                        </button>
-                    </div>
-                `;
-                listEl.appendChild(card);
+    // Load Offline Books Shelf
+    const db = await window.dbAPI.initDB();
+    if (db) {
+        const allBooks = await db.getAll('books');
+        const shelf = document.getElementById('offline-books-grid');
+        if (shelf && allBooks.length > 0) {
+            shelf.innerHTML = ''; // clear empty state
+            allBooks.forEach(b => {
+                const card = createBookCard(b.meta, true); // true = is offline
+                card.addEventListener('click', () => openBook(b.id));
+                shelf.appendChild(card);
             });
         }
     }
-
-    // Attempt to load reading progress (stub for now if no book loaded)
-    const progEl = document.getElementById('read-progress');
-    const existingProg = await window.dbAPI.getProgress('currentBook');
-    if (progEl && existingProg && existingProg.percentage) {
-        progEl.textContent = `${existingProg.percentage}%`;
-    }
 }
 
-function getShortDef(defData) {
-    if (!defData || defData.error) return 'Definition not parsed';
-    try {
-        return defData.meanings[0].definitions[0].definition.substring(0, 60) + '...';
-    } catch (e) {
-        return 'Definition available';
-    }
-}
-
-// Global helper for the play button in the list
-window.playWord = function (word) {
-    if (window.speechAPI) window.speechAPI.speak(word);
+function createBookCard(meta, isOffline = false) {
+    const div = document.createElement('div');
+    div.className = 'book-card glass-panel cursor-pointer';
+    div.innerHTML = `
+        <div class="book-cover" style="background-image: url('${meta.cover || 'assets/librivox-cover.png'}')">
+             ${meta.language_level ? `<span class="level-badge">${meta.language_level}</span>` : ''}
+             ${meta.type === 'audio' ? `<div class="audio-badge">🎧 Audio</div>` : ''}
+        </div>
+        <div class="book-meta">
+            <h4 class="book-title truncate">${meta.title}</h4>
+            <p class="book-author truncate">${meta.author || 'Unknown'}</p>
+            ${isOffline ? `<span style="font-size:0.7rem;color:var(--success);">Available Offline</span>` : ''}
+        </div>
+    `;
+    return div;
 }
 
 function setupFileUpload() {
     const uploadInput = document.getElementById('epub-upload');
     if (!uploadInput) return;
 
-    uploadInput.addEventListener('change', (e) => {
+    uploadInput.addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
-        // We read it as ArrayBuffer to pass it to epubjs or save it
-        // For simplicity in this PWA, we will store the file in memory via a Blob URL
-        // or inject it directly into the reader page using localStorage for the array buffer (if small)
-        // or better, just pass it via IndexedDB.
+        // Enforce limit again just in case
+        const count = await window.dbAPI.getLocalBookCount();
+        if (!window.globals.isPremium && count >= 1) {
+            window.globals.checkPremiumAction('Unlimited Local Uploads');
+            return;
+        }
 
-        saveBookToDBAndNavigate(file);
+        const reader = new FileReader();
+        reader.onload = async function (e) {
+            const arrayBuffer = e.target.result;
+            const bookId = `local_${Date.now()}`;
+
+            // Generate basic metadata
+            const isPDF = file.name.toLowerCase().endsWith('.pdf');
+            const metadata = {
+                title: file.name.replace(/\.[^/.]+$/, ""),
+                author: 'Local File',
+                type: isPDF ? 'pdf' : 'text',
+                category: 'Local'
+            };
+
+            await window.dbAPI.saveBook(bookId, arrayBuffer, metadata);
+
+            // Navigate to reader
+            openBook(bookId);
+        };
+        reader.readAsArrayBuffer(file);
     });
 }
 
-// Store the epub file in IndexedDB so the reader page can access it
-async function saveBookToDBAndNavigate(file) {
-    const db = await window.dbAPI.initDB();
-    if (db) {
-        // ensure store exists or just use a dedicated 'books' store
-        if (!db.objectStoreNames.contains('books')) {
-            // We can dynamically add stores in upgrade, but we defined it at v1.
-            // If we didn't, we can use localForage or just a quick trick for now:
+function openBook(bookId) {
+    // We pass the bookId payload via localStorage for the reader to pick up
+    localStorage.setItem('activeBookId', bookId);
+    window.location.href = 'reader.html';
+}
+
+// ==========================================
+// SEARCH LOGIC (OpenLibrary + LibriVox)
+// ==========================================
+let searchTimeout;
+function setupSearch() {
+    const input = document.getElementById('omni-search');
+    const closeBtn = document.getElementById('close-search');
+    const resultsContainer = document.getElementById('search-results-container');
+    const resultsGrid = document.getElementById('search-results-grid');
+    const spinner = document.getElementById('search-spinner');
+
+    if (!input) return;
+
+    input.addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        const query = e.target.value.trim();
+
+        if (query.length < 3) {
+            resultsContainer.classList.add('hidden');
+            return;
         }
-    }
 
-    // Quick trick: Create an Object URL and store in LocalStorage for the session
-    // Note: URL.createObjectURL expires on page reload. For true offline persistence
-    // of the local file, we need a 'books' store in IDB storing the Blob.
+        if (spinner) spinner.classList.remove('hidden');
 
-    // Fallback: Read as ArrayBuffer and store in a new IDB just for the book
-    // To keep it simple and within our current architecture without rebuilding DB version:
-    // We will pass the file directly if we used a SPA. Since we use mutiple HTML files:
+        searchTimeout = setTimeout(async () => {
+            // Concurrent search
+            const [textRes, audioRes] = await Promise.all([
+                window.libraryAPI.searchOpenLibrary(query),
+                window.libraryAPI.searchLibriVox(query)
+            ]);
 
-    const reader = new FileReader();
-    reader.onload = async function (e) {
-        const arrayBuffer = e.target.result;
+            const combined = [...textRes, ...audioRes];
 
-        // Let's use standard idb to store it raw
-        const tempDb = await idb.openDB('bookStore', 1, {
-            upgrade(db) { db.createObjectStore('files'); }
+            resultsGrid.innerHTML = '';
+            if (combined.length === 0) {
+                resultsGrid.innerHTML = '<p class="empty-state">No results found.</p>';
+            } else {
+                combined.forEach(meta => {
+                    const card = createBookCard(meta);
+                    card.addEventListener('click', () => {
+                        // For network books, we either download and save, or pass URL directly
+                        // Since OpenLibrary doesn't always provide raw text, usually we'd link to reader.
+                        // For this simulation, we'll alert that network reader isn't fully wired for raw files yet
+                        // unless it's a direct PDF link.
+                        if (meta.type === 'audio') {
+                            // Route to audio player / open new tab
+                            alert(`Opening Audiobook: ${meta.title}`);
+                            if (meta.project_url) window.open(meta.project_url, '_blank');
+                        } else {
+                            alert(`This is a library catalog entry. To read it, download the EPUB/PDF from OpenLibrary and use Local Upload.`);
+                        }
+                    });
+                    resultsGrid.appendChild(card);
+                });
+            }
+
+            if (spinner) spinner.classList.add('hidden');
+            resultsContainer.classList.remove('hidden');
+
+        }, 800); // debounce 800ms
+    });
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            resultsContainer.classList.add('hidden');
+            input.value = '';
         });
-
-        await tempDb.put('files', arrayBuffer, 'currentBook');
-
-        // Navigate
-        window.location.href = 'reader.html';
-    };
-    reader.readAsArrayBuffer(file);
+    }
 }
