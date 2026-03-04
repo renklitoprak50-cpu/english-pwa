@@ -1,44 +1,37 @@
 /**
- * MyMemory Translation API Wrapper V4
- * Translates from currently selected language directly to Turkish (or English fallback).
+ * Google Translate API Wrapper
+ * Translates directly to Turkish using a free Google Translate endpoint.
  */
-
-const MYMEMORY_API_BASE = 'https://api.mymemory.translated.net/get?q=';
 
 async function fetchTranslation(word) {
     if (!word) return null;
     try {
-        // Build the language pair using the global V4 Language State
         const map = window.globals.getActiveLanguageMap();
-        // Target language is strictly Turkish for this PWA
-        const targetLang = 'tr';
+        const sourceLang = "auto";
+        const targetLang = "tr";
 
-        // If mymem mapping is missing, default to English.
-        const sourceLang = map && map.mymem ? map.mymem : 'en';
-
-        const url = `${MYMEMORY_API_BASE}${encodeURIComponent(word)}&langpair=${sourceLang}|${targetLang}`;
+        // Free Google Translate GoogleAPI endpoint
+        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLang}&tl=${targetLang}&dt=t&q=${encodeURIComponent(word)}`;
 
         const res = await fetch(url);
         const data = await res.json();
 
-        if (data.responseStatus === 200 && data.responseData.translatedText) {
+        // data[0][0][0] contains the translated text
+        if (data && data[0] && data[0][0] && data[0][0][0]) {
             return {
                 word: word,
-                translation: data.responseData.translatedText,
-                phonetic: `[${sourceLang.toUpperCase()}]`,
-                source_lang: sourceLang,
-                match: data.responseData.match
+                translation: data[0][0][0],
+                phonetic: `[${(map && map.label ? map.label.substring(0, 2) : sourceLang).toUpperCase()}]`,
+                source_lang: sourceLang
             };
         }
 
         return { error: "Translation not found." };
 
     } catch (err) {
-        console.error("MyMemory Translation API error:", err);
+        console.error("Google Translate API error:", err);
         return { error: "Network error occurred." };
     }
 }
 
-window.dictionaryAPI = {
-    fetchDefinition: fetchTranslation // kept original name for backward compatibility with older saving logic
-};
+window.dictionaryAPI = { fetchDefinition: fetchTranslation };

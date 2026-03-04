@@ -683,6 +683,11 @@ function setupControls() {
                 slider.value = val;
                 if (progressText) progressText.textContent = `${val}%`;
             }
+
+            // V10 RPG Integration: Add 1 XP per page turn
+            if (window.GameEngine) {
+                window.GameEngine.addXP(1);
+            }
         });
         // V9 Settings Sync UI 
         const toggleSpreadBtn = document.getElementById('toggle-spread');

@@ -1,15 +1,8 @@
-const CACHE_NAME = 'english-reader-pwa-v12-csp';
+const CACHE_NAME = 'english-reader-pwa-v14-zerobug';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
-  '/reader.html',
-  '/css/main.css',
-  '/js/app.js',
-  '/js/reader.js',
-  '/js/db.js',
-  '/js/dictionary.js',
-  '/js/speech.js',
-  '/manifest.json'
+  '/reader.html'
 ];
 
 // Install Event
@@ -40,7 +33,7 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch Event
+// Fetch Event - EMERGENCY RESET
 self.addEventListener('fetch', (event) => {
   // Only intercept GET requests
   if (event.request.method !== 'GET') return;
@@ -48,40 +41,27 @@ self.addEventListener('fetch', (event) => {
   // Bypass blob and data URLs (Crucial for EPUB.js rendering)
   if (event.request.url.startsWith('blob:') || event.request.url.startsWith('data:')) return;
 
-  // Skip cross-origin requests, like Dictionary API
+  // Skip cross-origin requests, like Dictionary API or EPUB proxies
   if (!event.request.url.startsWith(self.location.origin)) return;
 
   event.respondWith(
     caches.match(event.request).then((response) => {
-      // Return cached response if found
       if (response) {
-        return response;
+        return response; // Serve from cache
       }
-
-      // Otherwise fetch from network
-      return fetch(event.request).then(
-        function (response) {
-          // Check if we received a valid response
-          if (!response || response.status !== 200 || response.type !== 'basic') {
-            return response;
-          }
-
-          // IMPORTANT: Clone the response. A response is a stream
-          // and because we want the browser to consume the response
-          // as well as the cache consuming the response, we need
-          // to clone it so we have two streams.
-          var responseToCache = response.clone();
-
-          caches.open(CACHE_NAME)
-            .then(function (cache) {
-              cache.put(event.request, responseToCache);
-            });
-
-          return response;
+      return fetch(event.request).then((networkResponse) => {
+        // Cache successful network responses for same-origin GETs
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
         }
-      );
+        return networkResponse;
+      });
     }).catch(() => {
-      // Fallback or offline page logic could go here
+      // Return a basic fallback or nothing on full network failure
+      console.warn('Network and cache failed for:', event.request.url);
     })
   );
 });
