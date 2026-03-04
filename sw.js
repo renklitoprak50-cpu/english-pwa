@@ -1,4 +1,4 @@
-const CACHE_NAME = 'english-reader-pwa-v1';
+const CACHE_NAME = 'english-reader-pwa-v8-hotfix';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -46,7 +46,7 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   // Only intercept GET requests
   if (event.request.method !== 'GET') return;
-  
+
   // Skip cross-origin requests, like Dictionary API
   if (!event.request.url.startsWith(self.location.origin)) return;
 
@@ -56,12 +56,12 @@ self.addEventListener('fetch', (event) => {
       if (response) {
         return response;
       }
-      
+
       // Otherwise fetch from network
       return fetch(event.request).then(
-        function(response) {
+        function (response) {
           // Check if we received a valid response
-          if(!response || response.status !== 200 || response.type !== 'basic') {
+          if (!response || response.status !== 200 || response.type !== 'basic') {
             return response;
           }
 
@@ -72,7 +72,7 @@ self.addEventListener('fetch', (event) => {
           var responseToCache = response.clone();
 
           caches.open(CACHE_NAME)
-            .then(function(cache) {
+            .then(function (cache) {
               cache.put(event.request, responseToCache);
             });
 
@@ -80,7 +80,7 @@ self.addEventListener('fetch', (event) => {
         }
       );
     }).catch(() => {
-        // Fallback or offline page logic could go here
+      // Fallback or offline page logic could go here
     })
   );
 });

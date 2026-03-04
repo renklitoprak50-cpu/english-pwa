@@ -810,6 +810,12 @@ body.sepia-theme {
     --accent-primary: #c26922;
 }
 
+body.reader-mode {
+    background-color: var(--bg-base, #fbf0d9);
+    height: 100vh;
+    overflow: hidden;
+}
+
 body.sepia-theme .reader-toolbar {
     background: var(--bg-panel);
     border-bottom: 1px solid rgba(0, 0, 0, 0.1);
@@ -990,6 +996,7 @@ body.sepia-theme h4 {
    V8 EPUB SLIDER
 ========================================= */
 #epub-slider {
+    appearance: none;
     -webkit-appearance: none;
     height: 4px;
     background: rgba(255, 255, 255, 0.3);
