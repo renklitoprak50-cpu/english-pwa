@@ -1,4 +1,4 @@
-const CACHE_NAME = 'english-reader-pwa-v10-final';
+const CACHE_NAME = 'english-reader-pwa-v12-csp';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -44,6 +44,9 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   // Only intercept GET requests
   if (event.request.method !== 'GET') return;
+
+  // Bypass blob and data URLs (Crucial for EPUB.js rendering)
+  if (event.request.url.startsWith('blob:') || event.request.url.startsWith('data:')) return;
 
   // Skip cross-origin requests, like Dictionary API
   if (!event.request.url.startsWith(self.location.origin)) return;

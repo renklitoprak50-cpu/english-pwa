@@ -1,0 +1,14 @@
+{
+    "cleanUrls": true,
+    "headers": [
+        {
+            "source": "/(.*\\.epub)",
+            "headers": [
+                {
+                    "key": "Content-Type",
+                    "value": "application/epub+zip"
+                }
+            ]
+        }
+    ]
+}

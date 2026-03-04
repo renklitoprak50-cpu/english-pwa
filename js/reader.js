@@ -13,26 +13,26 @@ let pdfCanvas = null;
 let pdfCtx = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
-    setupControls();
-    setupAudioPlayer();
-
-    const dictPlayBtn = document.getElementById('dict-play');
-    if (dictPlayBtn) {
-        dictPlayBtn.addEventListener('click', () => {
-            if (currentWordData && currentWordData.word && window.speechAPI) {
-                window.speechAPI.speak(currentWordData.word, 0.9);
-            }
-        });
-    }
-
-    const bookId = localStorage.getItem('activeBookId');
-    if (!bookId) {
-        alert("Lütfen kütüphaneden bir kitap seçin.");
-        window.location.href = 'index.html';
-        return;
-    }
-
     try {
+        setupControls();
+        setupAudioPlayer();
+
+        const dictPlayBtn = document.getElementById('dict-play');
+        if (dictPlayBtn) {
+            dictPlayBtn.addEventListener('click', () => {
+                if (currentWordData && currentWordData.word && window.speechAPI) {
+                    window.speechAPI.speak(currentWordData.word, 0.9);
+                }
+            });
+        }
+
+        const bookId = localStorage.getItem('activeBookId');
+        if (!bookId) {
+            alert("Lütfen kütüphaneden bir kitap seçin.");
+            window.location.href = 'index.html';
+            return;
+        }
+
         const db = await window.dbAPI.initDB();
         const bookData = await db.get('books', bookId);
 
@@ -64,7 +64,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             window.location.href = 'index.html';
         }
     } catch (err) {
-        console.error("Kitap yükleme hatası:", err);
+        console.error("CRITICAL READER BOOT ERROR:", err);
+        const fallbackBar = document.getElementById('embed-fallback-bar');
+        if (fallbackBar) {
+            fallbackBar.classList.remove('hidden');
+            fallbackBar.style.background = 'var(--error)';
+            const text = document.getElementById('fallback-text');
+            if (text) text.textContent = "Kitap yüklenirken kritik bir hata oluştu: " + err.message;
+        }
     }
 });
 
