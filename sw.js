@@ -1,4 +1,4 @@
-const CACHE_NAME = 'english-reader-pwa-v8-hotfix';
+const CACHE_NAME = 'english-reader-pwa-v9-master';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
