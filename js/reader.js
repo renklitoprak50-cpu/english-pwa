@@ -94,6 +94,11 @@ async function initNativeReader(meta) {
 
     const bookId = meta.id || meta.ia_id;
 
+    // V9 Legacy Metadata Patch: Reconstruct EPUB URL if missing from Old Caches
+    if (meta.isGutenberg && !meta.epub_url && meta.ia_id) {
+        meta.epub_url = `https://www.gutenberg.org/ebooks/${meta.ia_id}.epub.images`;
+    }
+
     // V8 True EPUB Logic
     if (meta.epub_url) {
         fallbackBar.classList.remove('hidden');
@@ -109,17 +114,31 @@ async function initNativeReader(meta) {
             if (cachedEpub) {
                 arrayBuffer = cachedEpub;
             } else {
-                const proxyUrl = '/api/proxy?url=' + encodeURIComponent(meta.epub_url);
-                const res = await fetch(proxyUrl);
-                if (!res.ok) throw new Error("EPUB Fetch failed");
+                // Try Vercel Serverless Proxy
+                let res = await fetch('/api/proxy?url=' + encodeURIComponent(meta.epub_url));
+
+                // If Vercel Proxy fails (e.g., 4.5MB payload limit on Serverless Functions), fallback to allorigins.win
+                if (!res.ok) {
+                    console.warn("Vercel proxy failed, trying allorigins fallback...");
+                    res = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(meta.epub_url));
+                }
+
+                // Final fallback just in case
+                if (!res.ok) {
+                    console.warn("Allorigins failed, trying corsproxy.io...");
+                    res = await fetch('https://corsproxy.io/?' + encodeURIComponent(meta.epub_url));
+                }
+
+                if (!res.ok) throw new Error("All EPUB Proxies Failed");
+
                 arrayBuffer = await res.arrayBuffer();
                 await window.dbAPI.saveBookContent(bookId + "_epub", arrayBuffer);
             }
             fallbackBar.classList.add('hidden');
             initEpubReader(arrayBuffer);
-            return;
+            return; // STRICT RETURN: We NEVER fall back to text if EPUB is available.
         } catch (e) {
-            console.warn("EPUB failed, falling back to text", e);
+            console.error("CRITICAL: EPUB Download completely failed. Falling back to text as last resort.", e);
         }
     }
 
@@ -800,6 +819,20 @@ function initEpubReader(arrayBuffer) {
         window.dispatchEvent(new CustomEvent('epub-relocated', { detail: location }));
     });
 
+    // V9 Native EPUB.js Selection Event (Dictionary Integration)
+    epubRendition.on("selected", async (cfiRange, contents) => {
+        epubBook.getRange(cfiRange).then(range => {
+            const word = range.toString().trim();
+            if (word) {
+                let context = "";
+                if (range.commonAncestorContainer && range.commonAncestorContainer.textContent) {
+                    context = range.commonAncestorContainer.textContent.trim().substring(0, 150) + "...";
+                }
+                handleWordSelection(word, context);
+            }
+        });
+    });
+
     epubRendition.hooks.content.register((contents, view) => {
         // V8: Let the book breathe, minimal overrides to keep original book layout
         contents.addStylesheetRules([
@@ -807,20 +840,6 @@ function initEpubReader(arrayBuffer) {
         ]);
 
         const doc = contents.document;
-        // V8 Apple Books Style: Select to Translate
-        doc.addEventListener('pointerup', (e) => {
-            const selection = contents.window.getSelection();
-            if (!selection) return;
-            const text = selection.toString().trim();
-            if (text && text.length > 0) {
-                let node = selection.anchorNode;
-                let context = "";
-                while (node && node.nodeName !== 'P' && node.nodeName !== 'DIV') node = node.parentNode;
-                if (node) context = node.textContent.trim().substring(0, 150) + "...";
-                handleWordSelection(text, context);
-                e.stopPropagation();
-            }
-        });
 
         // Tap to toggle menu or turn pages
         doc.addEventListener('click', (e) => {

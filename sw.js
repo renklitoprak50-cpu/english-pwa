@@ -1,4 +1,4 @@
-const CACHE_NAME = 'english-reader-pwa-v9-master';
+const CACHE_NAME = 'english-reader-pwa-v10-final';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
