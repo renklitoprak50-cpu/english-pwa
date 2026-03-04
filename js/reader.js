@@ -705,6 +705,11 @@ function pdfNextPage() {
 // =====================================
 function initEpubReader(arrayBuffer) {
     document.getElementById('pdf-canvas').style.display = 'none';
+
+    // V8: Unhide EPUB layers
+    document.getElementById('text-viewer-layer').classList.add('hidden');
+    document.getElementById('local-viewer-layer').classList.remove('hidden');
+
     epubBook = ePub(arrayBuffer);
 
     epubRendition = epubBook.renderTo("epub-render-target", {
