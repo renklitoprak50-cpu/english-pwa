@@ -341,29 +341,32 @@ h4 {
 }
 
 .book-card {
-    flex: 0 0 140px;
+    flex: 0 0 150px;
     scroll-snap-align: start;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow: visible;
     padding-bottom: 0.5rem;
-    transition: transform 0.2s;
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    background: transparent;
 }
 
 .book-card:hover {
-    transform: translateY(-3px);
+    transform: translateY(-8px) scale(1.02);
 }
 
 .book-cover {
-    height: 190px;
+    height: 220px;
     background-color: var(--bg-surface);
     background-size: cover;
     background-position: center;
     position: relative;
+    border-radius: 8px;
+    box-shadow: 6px 8px 15px rgba(0, 0, 0, 0.4), inset -2px 0 5px rgba(0, 0, 0, 0.1);
 }
 
 .book-meta {
-    padding: 0.5rem 0.5rem 0 0.5rem;
+    padding: 0.8rem 0.2rem 0;
 }
 
 .book-title {
@@ -472,11 +475,19 @@ h4 {
 
 .shelf-books {
     display: flex;
-    gap: 1rem;
+    gap: 1.5rem;
     overflow-x: auto;
-    padding-bottom: 1rem;
+    padding-bottom: 2rem;
+    padding-top: 1rem;
+    padding-left: 0.5rem;
     scroll-snap-type: x mandatory;
-    /* Hide scrollbar on mobile, subtle on desktop handled by webkit-scrollbar */
+    scrollbar-width: none;
+    /* Firefox */
+}
+
+.shelf-books::-webkit-scrollbar {
+    display: none;
+    /* Safari and Chrome */
 }
 
 .gutenberg-badge {
@@ -502,6 +513,92 @@ h4 {
 .action-section {
     padding: var(--spacing-4);
     margin-bottom: 2rem;
+}
+
+/* ====================================================
+   V8 ELITE RESTORATION: FLOATING UI & PAGINATION
+   ==================================================== */
+.floating-ui {
+    position: fixed;
+    z-index: 50;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    opacity: 0;
+    pointer-events: none;
+    left: 0;
+    right: 0;
+    width: 100%;
+}
+
+.floating-ui.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.floating-top {
+    top: 0;
+    transform: translateY(-100%);
+}
+
+.floating-top.active {
+    transform: translateY(0);
+}
+
+.floating-bottom {
+    bottom: 0;
+    transform: translateY(100%);
+}
+
+.floating-bottom.active {
+    transform: translateY(0);
+}
+
+/* V8 Pure Pagination Engine */
+#text-scroll-area {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    /* Hide scrollbars completely */
+    position: relative;
+    box-sizing: border-box;
+    padding: 0;
+}
+
+#text-render-target {
+    column-width: 100vw;
+    column-gap: 0;
+    height: 100%;
+    padding: 40px 8vw;
+    /* Inner padding inside the column viewport */
+    box-sizing: border-box;
+    transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    /* Smooth Apple-like swiping */
+}
+
+/* Left / Right / Center Tap Zones */
+.tap-zone {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    z-index: 10;
+}
+
+.tap-zone-left {
+    left: 0;
+    width: 30%;
+    cursor: w-resize;
+}
+
+.tap-zone-right {
+    right: 0;
+    width: 30%;
+    cursor: e-resize;
+}
+
+.tap-zone-center {
+    left: 30%;
+    right: 30%;
+    width: 40%;
+    cursor: pointer;
 }
 
 /* ====================================================
@@ -702,14 +799,15 @@ h4 {
     background: rgba(255, 255, 255, 0.2);
 }
 
-/* V7.6 THE ULTIMATE SONIC READER THEME */
+/* V8 ELITE READER THEME (Apple Books Style Sepia) */
 body.sepia-theme {
-    --bg-base: #fdf6e3;
-    --bg-panel: #f5e6ce;
-    --bg-surface: #eee8d5;
-    --text-primary: #333333;
-    --text-secondary: #586e75;
-    --text-muted: #93a1a1;
+    --bg-base: #fbf0d9;
+    --bg-panel: #f4e8cd;
+    --bg-surface: #eaddc5;
+    --text-primary: #3d3024;
+    --text-secondary: #705a41;
+    --text-muted: #9d8c76;
+    --accent-primary: #c26922;
 }
 
 body.sepia-theme .reader-toolbar {
@@ -745,15 +843,16 @@ body.sepia-theme h4 {
     transition: background-color 0.1s ease;
 }
 
-/* Sonic Reader Text Area */
+/* Elite Reader Text Area */
 #text-viewer-layer {
     font-family: 'Merriweather', 'Lora', serif !important;
-    font-size: 1.15rem !important;
-    line-height: 1.8 !important;
+    font-size: 1.25rem !important;
+    line-height: 1.9 !important;
     color: var(--text-primary) !important;
     text-align: justify !important;
-    padding: 2rem 5% !important;
-    max-width: 900px;
+    padding: 0 !important;
+    /* Will be managed by scroll area */
+    max-width: 100%;
 }
 
 /* Add TTS Control Bar */

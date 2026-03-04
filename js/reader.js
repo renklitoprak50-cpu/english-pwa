@@ -191,20 +191,13 @@ function renderNativeText(text, layer, target, ttsController) {
         span.className = 'tts-chunk cursor-pointer';
         span.dataset.index = index;
 
-        // Dictionary Support (Click to Translate)
-        span.addEventListener('click', (e) => {
+        // V8 Apple Books Style: Select to Translate
+        span.addEventListener('pointerup', (e) => {
             const selection = window.getSelection();
-            let word = selection.toString().trim();
-            if (!word) {
-                // Approximate word from click if no selection
-                const range = document.caretRangeFromPoint(e.clientX, e.clientY);
-                if (range) {
-                    range.expand('word');
-                    word = range.toString().trim();
-                }
-            }
+            const word = selection.toString().trim();
             if (word && word.length > 0) {
                 handleWordSelection(word, chunk.trim());
+                e.stopPropagation();
             }
         });
 
@@ -213,6 +206,88 @@ function renderNativeText(text, layer, target, ttsController) {
     });
 
     setupSonicTTS(target);
+
+    // V8 Elite Pagination init
+    setTimeout(() => {
+        initPaginationControls();
+        window.dbAPI.getProgress('currentBook').then(prog => {
+            if (prog && prog.location) {
+                currentColumnIndex = parseInt(prog.location) || 0;
+                updatePagination();
+            }
+        });
+    }, 150);
+}
+
+// =====================================
+// V8 ELITE NATIVE PAGINATION
+// =====================================
+let currentColumnIndex = 0;
+let totalColumns = 1;
+
+function updatePagination() {
+    const target = document.getElementById('text-render-target');
+    if (!target) return;
+
+    totalColumns = Math.ceil(target.scrollWidth / window.innerWidth);
+    if (currentColumnIndex >= totalColumns) currentColumnIndex = Math.max(0, totalColumns - 1);
+    if (currentColumnIndex < 0) currentColumnIndex = 0;
+
+    target.style.transform = `translateX(-${currentColumnIndex * 100}vw)`;
+    window.dbAPI.saveProgress('currentBook', currentColumnIndex.toString());
+}
+
+function initPaginationControls() {
+    const target = document.getElementById('text-render-target');
+    const layer = document.getElementById('text-scroll-area');
+    if (!target || !layer) return;
+
+    totalColumns = Math.ceil(target.scrollWidth / window.innerWidth);
+    currentColumnIndex = 0;
+
+    // Tap Zones & Menu Toggle
+    layer.onclick = (e) => {
+        if (window.getSelection().toString().trim().length > 0) return; // Wait if selecting text
+
+        const x = e.clientX;
+        const width = window.innerWidth;
+
+        if (x < width * 0.25) {
+            // Left Zone: Prev Page
+            if (currentColumnIndex > 0) {
+                currentColumnIndex--;
+                updatePagination();
+            }
+        } else if (x > width * 0.75) {
+            // Right Zone: Next Page
+            if (currentColumnIndex < totalColumns - 1) {
+                currentColumnIndex++;
+                updatePagination();
+            }
+        } else {
+            // Center Zone: Toggle Menu
+            document.querySelectorAll('.floating-ui').forEach(ui => {
+                ui.classList.toggle('active');
+            });
+        }
+    };
+
+    // Recalibrate columns on resize
+    window.addEventListener('resize', () => {
+        setTimeout(updatePagination, 50);
+    });
+
+    // Also support smooth horizontal swipes for pages
+    let touchStartX = 0;
+    layer.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
+    layer.addEventListener('touchend', e => {
+        const touchEndX = e.changedTouches[0].screenX;
+        if (touchEndX < touchStartX - 50 && currentColumnIndex < totalColumns - 1) {
+            currentColumnIndex++; updatePagination();
+        } else if (touchEndX > touchStartX + 50 && currentColumnIndex > 0) {
+            currentColumnIndex--; updatePagination();
+        }
+    }, { passive: true });
 }
 
 function setupSonicTTS(container) {
