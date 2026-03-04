@@ -4,8 +4,6 @@ const ASSETS_TO_CACHE = [
   '/index.html',
   '/reader.html',
   '/css/main.css',
-  '/css/reader.css',
-  '/css/dashboard.css',
   '/js/app.js',
   '/js/reader.js',
   '/js/db.js',

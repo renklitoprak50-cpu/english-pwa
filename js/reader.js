@@ -596,19 +596,23 @@ function setupAudioPlayer() {
 // STANDARD CONTROLS (Common)
 // =====================================
 function setupControls() {
-    document.getElementById('btn-back')?.addEventListener('click', () => window.location.href = 'index.html');
+    const btnBack = document.getElementById('btn-back');
+    if (btnBack) btnBack.addEventListener('click', () => window.location.href = 'index.html');
 
-    document.getElementById('next-page')?.addEventListener('click', () => {
+    const btnNext = document.getElementById('next-page');
+    if (btnNext) btnNext.addEventListener('click', () => {
         if (currentBookMeta?.type === 'pdf') pdfNextPage();
         else if (epubRendition) epubRendition.next();
     });
 
-    document.getElementById('prev-page')?.addEventListener('click', () => {
+    const btnPrev = document.getElementById('prev-page');
+    if (btnPrev) btnPrev.addEventListener('click', () => {
         if (currentBookMeta?.type === 'pdf') pdfPrevPage();
         else if (epubRendition) epubRendition.prev();
     });
 
-    document.getElementById('drawer-dict-save')?.addEventListener('click', async (e) => {
+    const dictSave = document.getElementById('drawer-dict-save');
+    if (dictSave) dictSave.addEventListener('click', async (e) => {
         if (currentWordData) {
             await window.dbAPI.saveWord(
                 currentWordData.word, currentWordData.context, currentWordData.definitionData
@@ -622,8 +626,11 @@ function setupControls() {
         }
     });
 
-    document.getElementById('drawer-close')?.addEventListener('click', closeSideDrawer);
-    document.getElementById('drawer-overlay')?.addEventListener('click', closeSideDrawer);
+    const drawerClose = document.getElementById('drawer-close');
+    if (drawerClose) drawerClose.addEventListener('click', closeSideDrawer);
+
+    const drawerOverlay = document.getElementById('drawer-overlay');
+    if (drawerOverlay) drawerOverlay.addEventListener('click', closeSideDrawer);
 
     // V8 Theme Settings
     const themeBtns = document.querySelectorAll('.theme-btn');
@@ -671,22 +678,25 @@ function setupControls() {
             }
         });
         // V9 Settings Sync UI 
-        document.getElementById('toggle-spread')?.addEventListener('click', (e) => {
-            if (!epubRendition) return;
-            const currentSettings = JSON.parse(localStorage.getItem('epub_settings') || '{}');
-            const isCurrentlyOff = currentSettings.spread === false;
+        const toggleSpreadBtn = document.getElementById('toggle-spread');
+        if (toggleSpreadBtn) {
+            toggleSpreadBtn.addEventListener('click', (e) => {
+                if (!epubRendition) return;
+                const currentSettings = JSON.parse(localStorage.getItem('epub_settings') || '{}');
+                const isCurrentlyOff = currentSettings.spread === false;
 
-            if (isCurrentlyOff) {
-                currentSettings.spread = true;
-                e.target.textContent = '📖 Çift Sayfa Görünümü: Açık';
-                epubRendition.spread('auto');
-            } else {
-                currentSettings.spread = false;
-                e.target.textContent = '📖 Çift Sayfa Görünümü: Kapalı';
-                epubRendition.spread('none');
-            }
-            localStorage.setItem('epub_settings', JSON.stringify(currentSettings));
-        });
+                if (isCurrentlyOff) {
+                    currentSettings.spread = true;
+                    e.target.textContent = '📖 Çift Sayfa Görünümü: Açık';
+                    epubRendition.spread('auto');
+                } else {
+                    currentSettings.spread = false;
+                    e.target.textContent = '📖 Çift Sayfa Görünümü: Kapalı';
+                    epubRendition.spread('none');
+                }
+                localStorage.setItem('epub_settings', JSON.stringify(currentSettings));
+            });
+        }
 
         const zoomSlider = document.getElementById('zoom-slider');
         const zoomVal = document.getElementById('zoom-text-val');
