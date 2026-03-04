@@ -16,11 +16,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupControls();
     setupAudioPlayer();
 
-    document.getElementById('dict-play').addEventListener('click', () => {
-        if (currentWordData && currentWordData.word && window.speechAPI) {
-            window.speechAPI.speak(currentWordData.word, 0.9);
-        }
-    });
+    const dictPlayBtn = document.getElementById('dict-play');
+    if (dictPlayBtn) {
+        dictPlayBtn.addEventListener('click', () => {
+            if (currentWordData && currentWordData.word && window.speechAPI) {
+                window.speechAPI.speak(currentWordData.word, 0.9);
+            }
+        });
+    }
 
     const bookId = localStorage.getItem('activeBookId');
     if (!bookId) {
