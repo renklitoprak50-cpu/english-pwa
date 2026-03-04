@@ -156,31 +156,49 @@
                 </div>
             </div>
         </section>
+
+        <!-- V8 Elite EPUB Navigation Slider -->
+        <div id="epub-slider-container" class="floating-ui floating-bottom hidden"
+            style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 80%; max-width: 400px; background: rgba(0,0,0,0.7); padding: 10px 20px; border-radius: 20px; color: white; display: flex; align-items: center; gap: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 100;">
+            <span id="epub-progress-text" style="font-size: 0.8rem; font-weight: bold; min-width: 40px;">0%</span>
+            <input type="range" id="epub-slider" min="0" max="100" value="0" style="flex-grow: 1; cursor: pointer;">
+        </div>
     </div>
 
-    <!-- Smart Dictionary Modal -->
-    <div id="dict-modal" class="dict-modal hidden">
-        <div class="modal-content glass-panel">
-            <div class="modal-header">
-                <h3 id="dict-word">Word</h3>
-                <button id="dict-play" class="icon-btn action" aria-label="Pronounce">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                    </svg>
-                </button>
+    <!-- V8 Elite Side Drawer -->
+    <div id="side-drawer" class="side-drawer">
+        <div class="drawer-header">
+            <h3>Okuma Seçenekleri</h3>
+            <button id="drawer-close" class="icon-btn" style="font-size: 1.5rem;">&times;</button>
+        </div>
+
+        <div class="drawer-section">
+            <h4>📖 Sözlük</h4>
+            <div id="drawer-dict-content" style="min-height: 80px;">
+                <p id="drawer-dict-word" style="font-weight: bold; font-size: 1.2rem; margin-bottom: 5px;">Seçilen
+                    Kelime</p>
+                <p id="drawer-dict-phonetic"
+                    style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 5px;">...</p>
+                <p id="drawer-dict-def" style="margin-bottom: 10px;">Metin içinden bir kelime seçerek çevirisini
+                    görebilirsiniz.</p>
+                <button id="drawer-dict-save" class="btn primary"
+                    style="width: 100%; font-size: 0.8rem; margin-top: 10px;">Kelime Kartını Kaydet</button>
             </div>
-            <div class="dict-phonetic" id="dict-phonetic">/wɜːd/</div>
-            <div class="dict-body">
-                <p id="dict-definition" class="definition">Loading definition...</p>
-                <div class="context-box"><strong>Context:</strong><i id="dict-context">...</i></div>
-            </div>
-            <div class="modal-actions">
-                <button id="dict-save" class="btn primary full-width">Save to Flashcards</button>
-                <button id="dict-close" class="btn text-btn full-width">Close</button>
+        </div>
+
+        <div class="drawer-section">
+            <h4>⚙️ Görünüm Ayarları</h4>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button class="btn theme-btn" data-theme="light"
+                    style="flex:1; background: #fff; color: #000; border: 1px solid #ccc;">Light</button>
+                <button class="btn theme-btn" data-theme="sepia"
+                    style="flex:1; background: #fbf0d9; color: #3d3024; border: 1px solid #d5c8b2;">Sepia</button>
+                <button class="btn theme-btn" data-theme="dark"
+                    style="flex:1; background: #1a1a1a; color: #fff; border: 1px solid #333;">Dark</button>
             </div>
         </div>
     </div>
+    <div id="drawer-overlay" class="drawer-overlay"></div>
 
     <script src="js/db.js"></script>
     <script src="js/gamification.js"></script>

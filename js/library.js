@@ -201,11 +201,12 @@ async function fetchGutenbergShelf(langMap) {
 
         for (const book of data.results) {
             const bookId = `gtn_${book.id}`;
+            const epubUrl = book.formats['application/epub+zip'];
             const htmlUrl = book.formats['text/html'] || book.formats['text/html; charset=utf-8'];
             const txtUrl = book.formats['text/plain'] || book.formats['text/plain; charset=utf-8'] || book.formats['text/plain; charset=us-ascii'];
             const formatUrl = txtUrl || htmlUrl;
 
-            if (formatUrl) {
+            if (epubUrl || formatUrl) {
                 validBooks.push({
                     id: bookId,
                     ia_id: book.id,
@@ -217,6 +218,7 @@ async function fetchGutenbergShelf(langMap) {
                     language_level: heuristcLevelByPages(0, book.title),
                     isGutenberg: true, // Tag for UI
                     format_url: formatUrl,
+                    epub_url: epubUrl, // V8 Elite EPUB Source
                     langMap: langMap   // Tag for UI Flag
                 });
             }

@@ -72,7 +72,7 @@ function showFinalError() {
 }
 
 // =====================================
-// NATIVE READER & SONIC TTS (V7.6)
+// NATIVE READER & SONIC TTS (V8 True EPUB)
 // =====================================
 let ttsUtterance = null;
 let ttsSpans = [];
@@ -89,8 +89,38 @@ async function initNativeReader(meta) {
     document.getElementById('local-viewer-layer').classList.add('hidden');
     document.getElementById('book-progress').classList.add('hidden');
 
-    // 1. Check Local DB (Single-Fetch constraint)
     const bookId = meta.id || meta.ia_id;
+
+    // V8 True EPUB Logic
+    if (meta.epub_url) {
+        fallbackBar.classList.remove('hidden');
+        if (fallbackText) fallbackText.textContent = "Okuyucu Yükleniyor (EPUB)...";
+        fallbackBar.style.background = 'var(--accent-primary)';
+        fallbackBar.style.color = '#fff';
+        if (textLayer) textLayer.classList.add('hidden');
+
+        try {
+            // Check cache for arrayBuffer
+            const cachedEpub = await window.dbAPI.getBookContent(bookId + "_epub");
+            let arrayBuffer;
+            if (cachedEpub) {
+                arrayBuffer = cachedEpub;
+            } else {
+                const proxyUrl = '/api/proxy?url=' + encodeURIComponent(meta.epub_url);
+                const res = await fetch(proxyUrl);
+                if (!res.ok) throw new Error("EPUB Fetch failed");
+                arrayBuffer = await res.arrayBuffer();
+                await window.dbAPI.saveBookContent(bookId + "_epub", arrayBuffer);
+            }
+            fallbackBar.classList.add('hidden');
+            initEpubReader(arrayBuffer);
+            return;
+        } catch (e) {
+            console.warn("EPUB failed, falling back to text", e);
+        }
+    }
+
+    // 1. Check Local DB (Single-Fetch constraint)
     const cachedText = await window.dbAPI.getBookContent(bookId);
     if (cachedText) {
         renderNativeText(cachedText, textLayer, textTarget, ttsController);
@@ -556,7 +586,7 @@ function setupControls() {
         else if (epubRendition) epubRendition.prev();
     });
 
-    document.getElementById('dict-save')?.addEventListener('click', async (e) => {
+    document.getElementById('drawer-dict-save')?.addEventListener('click', async (e) => {
         if (currentWordData) {
             await window.dbAPI.saveWord(
                 currentWordData.word, currentWordData.context, currentWordData.definitionData
@@ -566,12 +596,59 @@ function setupControls() {
             setTimeout(() => {
                 e.target.textContent = 'Kelime Kartını Kaydet';
                 e.target.style.background = '';
-                closeDictModal();
             }, 1000);
         }
     });
 
-    document.getElementById('dict-close')?.addEventListener('click', closeDictModal);
+    document.getElementById('drawer-close')?.addEventListener('click', closeSideDrawer);
+    document.getElementById('drawer-overlay')?.addEventListener('click', closeSideDrawer);
+
+    // V8 Theme Settings
+    const themeBtns = document.querySelectorAll('.theme-btn');
+    themeBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const theme = e.target.getAttribute('data-theme');
+            document.body.className = theme === 'light' ? '' : `${theme}-theme`;
+            themeBtns.forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+
+            // Apply to EPUB if active
+            if (epubRendition) {
+                let color = theme === 'dark' ? '#fff' : '#3d3024';
+                if (theme === 'light') color = '#000';
+                epubRendition.themes.default({ body: { "color": `${color} !important` } });
+            }
+        });
+    });
+
+    // V8 EPUB Slider Navigation
+    const slider = document.getElementById('epub-slider');
+    const progressText = document.getElementById('epub-progress-text');
+
+    if (slider) {
+        slider.addEventListener('change', (e) => {
+            if (epubBook && epubRendition) {
+                const percentage = e.target.value / 100;
+                const cfi = epubBook.locations.cfiFromPercentage(percentage);
+                if (cfi) {
+                    epubRendition.display(cfi);
+                }
+            }
+        });
+
+        slider.addEventListener('input', (e) => {
+            if (progressText) progressText.textContent = `${e.target.value}%`;
+        });
+
+        window.addEventListener('epub-relocated', (e) => {
+            if (epubBook && epubBook.locations && epubBook.locations.length() > 0) {
+                const percentage = epubBook.locations.percentageFromCfi(e.detail.start.cfi);
+                const val = Math.round(percentage * 100);
+                slider.value = val;
+                if (progressText) progressText.textContent = `${val}%`;
+            }
+        });
+    }
 }
 
 // =====================================
@@ -631,7 +708,14 @@ function initEpubReader(arrayBuffer) {
     epubBook = ePub(arrayBuffer);
 
     epubRendition = epubBook.renderTo("epub-render-target", {
-        width: "100%", height: "100%", spread: "none"
+        width: "100%", height: "100%", spread: "auto"
+    });
+
+    epubBook.ready.then(() => {
+        // Generate locations for slider logic
+        return epubBook.locations.generate(1600);
+    }).then(() => {
+        // Locations generated, slider is now ready to use percentage
     });
 
     window.dbAPI.getProgress('currentBook').then(prog => {
@@ -641,16 +725,19 @@ function initEpubReader(arrayBuffer) {
 
     epubRendition.on("relocated", (location) => {
         window.dbAPI.saveProgress('currentBook', location.start.cfi);
+        // Dispatch event for Slider to update
+        window.dispatchEvent(new CustomEvent('epub-relocated', { detail: location }));
     });
 
     epubRendition.hooks.content.register((contents, view) => {
+        // V8: Let the book breathe, minimal overrides to keep original book layout
         contents.addStylesheetRules([
-            ['body', ['background-color: transparent !important', 'color: var(--text-primary) !important', 'font-size: 1.1rem !important']],
-            ['p', ['line-height: 1.8 !important', 'margin-bottom: 1.5em !important']]
+            ['body', ['background-color: transparent !important', 'color: var(--text-primary) !important']]
         ]);
 
         const doc = contents.document;
-        doc.addEventListener("dblclick", (e) => {
+        // V8 Apple Books Style: Select to Translate
+        doc.addEventListener('pointerup', (e) => {
             const selection = contents.window.getSelection();
             if (!selection) return;
             const text = selection.toString().trim();
@@ -660,54 +747,67 @@ function initEpubReader(arrayBuffer) {
                 while (node && node.nodeName !== 'P' && node.nodeName !== 'DIV') node = node.parentNode;
                 if (node) context = node.textContent.trim().substring(0, 150) + "...";
                 handleWordSelection(text, context);
+                e.stopPropagation();
+            }
+        });
+
+        // Tap to toggle menu or turn pages
+        doc.addEventListener('click', (e) => {
+            if (contents.window.getSelection().toString().trim().length > 0) return;
+            const x = e.clientX;
+            const width = contents.window.innerWidth;
+            if (x < width * 0.2) epubRendition.prev();
+            else if (x > width * 0.8) epubRendition.next();
+            else {
+                document.querySelectorAll('.floating-ui').forEach(ui => ui.classList.toggle('active'));
             }
         });
     });
 }
 
 // =====================================
-// DICTIONARY (V4)
+// DICTIONARY (V8 Side Drawer)
 // =====================================
 async function handleWordSelection(word, context) {
     word = word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
     if (word.length < 2) return;
 
     currentWordData = { word, context, definitionData: null };
-    openDictModal(word);
+    openSideDrawer(word);
 
     const transData = await window.dictionaryAPI.fetchDefinition(word);
 
     if (transData && !transData.error) {
         currentWordData.definitionData = transData;
-        const phoneticEl = document.getElementById('dict-phonetic');
-        const defEl = document.getElementById('dict-definition');
+        const phoneticEl = document.getElementById('drawer-dict-phonetic');
+        const defEl = document.getElementById('drawer-dict-def');
 
         phoneticEl.textContent = transData.phonetic || `[${window.globals.activeContentLang.toUpperCase()}]`;
         defEl.textContent = transData.translation;
 
-        if (transData.match < 0.5) {
-            document.getElementById('dict-context').textContent = `(Düşük Güvenilirlik Çevirisi) "${context}"`;
-        } else {
-            document.getElementById('dict-context').textContent = `"${context}"`;
-        }
     } else {
-        document.getElementById('dict-definition').textContent = "Çeviri bulunamadı.";
-        document.getElementById('dict-phonetic').textContent = "";
-        document.getElementById('dict-context').textContent = `"${context}"`;
+        document.getElementById('drawer-dict-def').textContent = "Çeviri bulunamadı.";
+        document.getElementById('drawer-dict-phonetic').textContent = "";
     }
 }
 
-function openDictModal(word) {
-    const modal = document.getElementById('dict-modal');
-    document.getElementById('dict-word').textContent = word;
-    document.getElementById('dict-definition').textContent = "Çevriliyor...";
-    document.getElementById('dict-context').textContent = "...";
-    document.getElementById('dict-phonetic').textContent = "...";
-    modal.classList.remove('hidden');
+function openSideDrawer(word = null) {
+    const drawer = document.getElementById('side-drawer');
+    const overlay = document.getElementById('drawer-overlay');
+
+    if (word) {
+        document.getElementById('drawer-dict-word').textContent = word;
+        document.getElementById('drawer-dict-def').textContent = "Çevriliyor...";
+        document.getElementById('drawer-dict-phonetic').textContent = "...";
+    }
+
+    drawer.classList.add('open');
+    overlay.classList.add('active');
 }
 
-function closeDictModal() {
-    document.getElementById('dict-modal').classList.add('hidden');
+function closeSideDrawer() {
+    document.getElementById('side-drawer').classList.remove('open');
+    document.getElementById('drawer-overlay').classList.remove('active');
     currentWordData = null;
     if (window.speechAPI) window.speechAPI.stop();
 }
