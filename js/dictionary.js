@@ -10,8 +10,11 @@ async function fetchTranslation(word) {
     try {
         // Build the language pair using the global V4 Language State
         const map = window.globals.getActiveLanguageMap();
-        const sourceLang = map.mymem;
-        const targetLang = 'tr'; // Translate everything to Turkish per user request
+        // Target language is strictly Turkish for this PWA
+        const targetLang = 'tr';
+
+        // If mymem mapping is missing, default to English.
+        const sourceLang = map && map.mymem ? map.mymem : 'en';
 
         const url = `${MYMEMORY_API_BASE}${encodeURIComponent(word)}&langpair=${sourceLang}|${targetLang}`;
 

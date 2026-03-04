@@ -196,6 +196,24 @@
                 <button class="btn theme-btn" data-theme="dark"
                     style="flex:1; background: #1a1a1a; color: #fff; border: 1px solid #333;">Dark</button>
             </div>
+
+            <!-- V9 True EPUB Engine Controls -->
+            <div style="margin-top: 20px;">
+                <h5 style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 8px;">Sayfa Düzeni</h5>
+                <button id="toggle-spread" class="btn secondary"
+                    style="width: 100%; border: 1px solid rgba(255,255,255,0.2);">
+                    📖 Çift Sayfa Görünümü: Açık
+                </button>
+            </div>
+
+            <div style="margin-top: 15px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <h5 style="font-size: 0.8rem; color: var(--text-secondary);">Metin Boyutu</h5>
+                    <span id="zoom-text-val" style="font-size: 0.8rem; font-weight: bold;">100%</span>
+                </div>
+                <input type="range" id="zoom-slider" min="80" max="250" value="100"
+                    style="width: 100%; cursor: pointer;">
+            </div>
         </div>
     </div>
     <div id="drawer-overlay" class="drawer-overlay"></div>
