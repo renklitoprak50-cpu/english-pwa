@@ -686,222 +686,222 @@ function setupControls() {
             });
         }
     }
+}
 
-    // =====================================
-    // PLAN A: PDF JS Logic
-    // =====================================
-    function initPDFReader(arrayBuffer) {
-        document.getElementById('pdf-canvas').style.display = 'block';
-        pdfCanvas = document.getElementById('pdf-canvas');
-        pdfCtx = pdfCanvas.getContext('2d');
+// =====================================
+// PLAN A: PDF JS Logic
+// =====================================
+function initPDFReader(arrayBuffer) {
+    document.getElementById('pdf-canvas').style.display = 'block';
+    pdfCanvas = document.getElementById('pdf-canvas');
+    pdfCtx = pdfCanvas.getContext('2d');
 
-        const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
-        loadingTask.promise.then(function (pdf) {
-            pdfDoc = pdf;
-            window.dbAPI.getProgress('currentBook').then(prog => {
-                if (prog && prog.location) pdfPageNum = parseInt(prog.location);
-                renderPDFPage(pdfPageNum);
-            });
-        }, function (reason) { });
+    const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+    loadingTask.promise.then(function (pdf) {
+        pdfDoc = pdf;
+        window.dbAPI.getProgress('currentBook').then(prog => {
+            if (prog && prog.location) pdfPageNum = parseInt(prog.location);
+            renderPDFPage(pdfPageNum);
+        });
+    }, function (reason) { });
 
-        document.addEventListener("dblclick", () => {
-            const selection = window.getSelection();
+    document.addEventListener("dblclick", () => {
+        const selection = window.getSelection();
+        if (!selection) return;
+        const text = selection.toString().trim();
+        if (text && text.length > 0) handleWordSelection(text, "PDF: Tam bağlam okunamadı.");
+    });
+}
+
+function renderPDFPage(num) {
+    pdfDoc.getPage(num).then(function (page) {
+        const viewport = page.getViewport({ scale: 1.5 });
+        pdfCanvas.height = viewport.height;
+        pdfCanvas.width = viewport.width;
+
+        const renderContext = { canvasContext: pdfCtx, viewport: viewport };
+        page.render(renderContext);
+
+        window.dbAPI.saveProgress('currentBook', num.toString());
+    });
+}
+
+function pdfPrevPage() {
+    if (pdfPageNum <= 1) return;
+    pdfPageNum--;
+    renderPDFPage(pdfPageNum);
+}
+function pdfNextPage() {
+    if (pdfPageNum >= pdfDoc.numPages) return;
+    pdfPageNum++;
+    renderPDFPage(pdfPageNum);
+}
+
+// =====================================
+// PLAN A: EPUB JS Logic
+// =====================================
+function initEpubReader(arrayBuffer) {
+    document.getElementById('pdf-canvas').style.display = 'none';
+
+    // V8: Unhide EPUB layers
+    document.getElementById('text-viewer-layer').classList.add('hidden');
+    document.getElementById('local-viewer-layer').classList.remove('hidden');
+
+    epubBook = ePub(arrayBuffer);
+
+    // V9 True EPUB Settings defaults
+    let defaultSpread = 'auto'; // Will be mapped to 'none' or 'auto'
+    let defaultZoom = '100%';
+
+    try {
+        const storedSettings = localStorage.getItem('epub_settings');
+        if (storedSettings) {
+            const parsed = JSON.parse(storedSettings);
+            if (parsed.spread === false) defaultSpread = 'none';
+            if (parsed.zoom) defaultZoom = `${parsed.zoom}%`;
+
+            // Sync UI state
+            const toggleSpreadBtn = document.getElementById('toggle-spread');
+            if (toggleSpreadBtn) {
+                toggleSpreadBtn.textContent = parsed.spread === false ? '📖 Çift Sayfa Görünümü: Kapalı' : '📖 Çift Sayfa Görünümü: Açık';
+            }
+            const zoomSlider = document.getElementById('zoom-slider');
+            const zoomVal = document.getElementById('zoom-text-val');
+            if (zoomSlider && zoomVal) {
+                zoomSlider.value = parsed.zoom || 100;
+                zoomVal.textContent = defaultZoom;
+            }
+        }
+    } catch (e) {
+        console.warn("Failed to load epub settings from localStorage", e);
+    }
+
+    epubRendition = epubBook.renderTo("epub-render-target", {
+        width: "100%", height: "100%", spread: defaultSpread
+    });
+
+    epubRendition.themes.fontSize(defaultZoom);
+
+    epubBook.ready.then(() => {
+        // Generate locations for slider logic
+        return epubBook.locations.generate(1600);
+    }).then(() => {
+        // Locations generated, slider is now ready to use percentage
+    });
+
+    window.dbAPI.getProgress('currentBook').then(prog => {
+        if (prog && prog.location) epubRendition.display(prog.location);
+        else epubRendition.display();
+    });
+
+    epubRendition.on("relocated", (location) => {
+        window.dbAPI.saveProgress('currentBook', location.start.cfi);
+        // Dispatch event for Slider to update
+        window.dispatchEvent(new CustomEvent('epub-relocated', { detail: location }));
+    });
+
+    epubRendition.hooks.content.register((contents, view) => {
+        // V8: Let the book breathe, minimal overrides to keep original book layout
+        contents.addStylesheetRules([
+            ['body', ['background-color: transparent !important', 'color: var(--text-primary) !important']]
+        ]);
+
+        const doc = contents.document;
+        // V8 Apple Books Style: Select to Translate
+        doc.addEventListener('pointerup', (e) => {
+            const selection = contents.window.getSelection();
             if (!selection) return;
             const text = selection.toString().trim();
-            if (text && text.length > 0) handleWordSelection(text, "PDF: Tam bağlam okunamadı.");
-        });
-    }
-
-    function renderPDFPage(num) {
-        pdfDoc.getPage(num).then(function (page) {
-            const viewport = page.getViewport({ scale: 1.5 });
-            pdfCanvas.height = viewport.height;
-            pdfCanvas.width = viewport.width;
-
-            const renderContext = { canvasContext: pdfCtx, viewport: viewport };
-            page.render(renderContext);
-
-            window.dbAPI.saveProgress('currentBook', num.toString());
-        });
-    }
-
-    function pdfPrevPage() {
-        if (pdfPageNum <= 1) return;
-        pdfPageNum--;
-        renderPDFPage(pdfPageNum);
-    }
-    function pdfNextPage() {
-        if (pdfPageNum >= pdfDoc.numPages) return;
-        pdfPageNum++;
-        renderPDFPage(pdfPageNum);
-    }
-
-    // =====================================
-    // PLAN A: EPUB JS Logic
-    // =====================================
-    function initEpubReader(arrayBuffer) {
-        document.getElementById('pdf-canvas').style.display = 'none';
-
-        // V8: Unhide EPUB layers
-        document.getElementById('text-viewer-layer').classList.add('hidden');
-        document.getElementById('local-viewer-layer').classList.remove('hidden');
-
-        epubBook = ePub(arrayBuffer);
-
-        // V9 True EPUB Settings defaults
-        let defaultSpread = 'auto'; // Will be mapped to 'none' or 'auto'
-        let defaultZoom = '100%';
-
-        try {
-            const storedSettings = localStorage.getItem('epub_settings');
-            if (storedSettings) {
-                const parsed = JSON.parse(storedSettings);
-                if (parsed.spread === false) defaultSpread = 'none';
-                if (parsed.zoom) defaultZoom = `${parsed.zoom}%`;
-
-                // Sync UI state
-                const toggleSpreadBtn = document.getElementById('toggle-spread');
-                if (toggleSpreadBtn) {
-                    toggleSpreadBtn.textContent = parsed.spread === false ? '📖 Çift Sayfa Görünümü: Kapalı' : '📖 Çift Sayfa Görünümü: Açık';
-                }
-                const zoomSlider = document.getElementById('zoom-slider');
-                const zoomVal = document.getElementById('zoom-text-val');
-                if (zoomSlider && zoomVal) {
-                    zoomSlider.value = parsed.zoom || 100;
-                    zoomVal.textContent = defaultZoom;
-                }
-            }
-        } catch (e) {
-            console.warn("Failed to load epub settings from localStorage", e);
-        }
-
-        epubRendition = epubBook.renderTo("epub-render-target", {
-            width: "100%", height: "100%", spread: defaultSpread
-        });
-
-        epubRendition.themes.fontSize(defaultZoom);
-
-        epubBook.ready.then(() => {
-            // Generate locations for slider logic
-            return epubBook.locations.generate(1600);
-        }).then(() => {
-            // Locations generated, slider is now ready to use percentage
-        });
-
-        window.dbAPI.getProgress('currentBook').then(prog => {
-            if (prog && prog.location) epubRendition.display(prog.location);
-            else epubRendition.display();
-        });
-
-        epubRendition.on("relocated", (location) => {
-            window.dbAPI.saveProgress('currentBook', location.start.cfi);
-            // Dispatch event for Slider to update
-            window.dispatchEvent(new CustomEvent('epub-relocated', { detail: location }));
-        });
-
-        epubRendition.hooks.content.register((contents, view) => {
-            // V8: Let the book breathe, minimal overrides to keep original book layout
-            contents.addStylesheetRules([
-                ['body', ['background-color: transparent !important', 'color: var(--text-primary) !important']]
-            ]);
-
-            const doc = contents.document;
-            // V8 Apple Books Style: Select to Translate
-            doc.addEventListener('pointerup', (e) => {
-                const selection = contents.window.getSelection();
-                if (!selection) return;
-                const text = selection.toString().trim();
-                if (text && text.length > 0) {
-                    let node = selection.anchorNode;
-                    let context = "";
-                    while (node && node.nodeName !== 'P' && node.nodeName !== 'DIV') node = node.parentNode;
-                    if (node) context = node.textContent.trim().substring(0, 150) + "...";
-                    handleWordSelection(text, context);
-                    e.stopPropagation();
-                }
-            });
-
-            // Tap to toggle menu or turn pages
-            doc.addEventListener('click', (e) => {
-                if (contents.window.getSelection().toString().trim().length > 0) return;
-                const x = e.clientX;
-                const width = contents.window.innerWidth;
-                if (x < width * 0.2) epubRendition.prev();
-                else if (x > width * 0.8) epubRendition.next();
-                else {
-                    document.querySelectorAll('.floating-ui').forEach(ui => ui.classList.toggle('active'));
-                }
-            });
-
-            // V9 Swipe to turn pages
-            let touchStartX = 0;
-            let touchEndX = 0;
-
-            doc.addEventListener('touchstart', e => {
-                touchStartX = e.changedTouches[0].screenX;
-            }, false);
-
-            doc.addEventListener('touchend', e => {
-                touchEndX = e.changedTouches[0].screenX;
-                handleSwipe();
-            }, false);
-
-            function handleSwipe() {
-                const swipeThreshold = 50;
-                if (touchEndX < touchStartX - swipeThreshold) {
-                    epubRendition.next(); // Swipe left -> next
-                }
-                if (touchEndX > touchStartX + swipeThreshold) {
-                    epubRendition.prev(); // Swipe right -> prev
-                }
+            if (text && text.length > 0) {
+                let node = selection.anchorNode;
+                let context = "";
+                while (node && node.nodeName !== 'P' && node.nodeName !== 'DIV') node = node.parentNode;
+                if (node) context = node.textContent.trim().substring(0, 150) + "...";
+                handleWordSelection(text, context);
+                e.stopPropagation();
             }
         });
-    }
 
-    // =====================================
-    // DICTIONARY (V8 Side Drawer)
-    // =====================================
-    async function handleWordSelection(word, context) {
-        word = word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
-        if (word.length < 2) return;
+        // Tap to toggle menu or turn pages
+        doc.addEventListener('click', (e) => {
+            if (contents.window.getSelection().toString().trim().length > 0) return;
+            const x = e.clientX;
+            const width = contents.window.innerWidth;
+            if (x < width * 0.2) epubRendition.prev();
+            else if (x > width * 0.8) epubRendition.next();
+            else {
+                document.querySelectorAll('.floating-ui').forEach(ui => ui.classList.toggle('active'));
+            }
+        });
 
-        currentWordData = { word, context, definitionData: null };
-        openSideDrawer(word);
+        // V9 Swipe to turn pages
+        let touchStartX = 0;
+        let touchEndX = 0;
 
-        const transData = await window.dictionaryAPI.fetchDefinition(word);
+        doc.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, false);
 
-        if (transData && !transData.error) {
-            currentWordData.definitionData = transData;
-            const phoneticEl = document.getElementById('drawer-dict-phonetic');
-            const defEl = document.getElementById('drawer-dict-def');
+        doc.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        }, false);
 
-            phoneticEl.textContent = transData.phonetic || `[${window.globals.activeContentLang.toUpperCase()}]`;
-            defEl.textContent = transData.translation;
-
-        } else {
-            document.getElementById('drawer-dict-def').textContent = "Çeviri bulunamadı.";
-            document.getElementById('drawer-dict-phonetic').textContent = "";
+        function handleSwipe() {
+            const swipeThreshold = 50;
+            if (touchEndX < touchStartX - swipeThreshold) {
+                epubRendition.next(); // Swipe left -> next
+            }
+            if (touchEndX > touchStartX + swipeThreshold) {
+                epubRendition.prev(); // Swipe right -> prev
+            }
         }
+    });
+}
+
+// =====================================
+// DICTIONARY (V8 Side Drawer)
+// =====================================
+async function handleWordSelection(word, context) {
+    word = word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
+    if (word.length < 2) return;
+
+    currentWordData = { word, context, definitionData: null };
+    openSideDrawer(word);
+
+    const transData = await window.dictionaryAPI.fetchDefinition(word);
+
+    if (transData && !transData.error) {
+        currentWordData.definitionData = transData;
+        const phoneticEl = document.getElementById('drawer-dict-phonetic');
+        const defEl = document.getElementById('drawer-dict-def');
+
+        phoneticEl.textContent = transData.phonetic || `[${window.globals.activeContentLang.toUpperCase()}]`;
+        defEl.textContent = transData.translation;
+
+    } else {
+        document.getElementById('drawer-dict-def').textContent = "Çeviri bulunamadı.";
+        document.getElementById('drawer-dict-phonetic').textContent = "";
+    }
+}
+
+function openSideDrawer(word = null) {
+    const drawer = document.getElementById('side-drawer');
+    const overlay = document.getElementById('drawer-overlay');
+
+    if (word) {
+        document.getElementById('drawer-dict-word').textContent = word;
+        document.getElementById('drawer-dict-def').textContent = "Çevriliyor...";
+        document.getElementById('drawer-dict-phonetic').textContent = "...";
     }
 
-    function openSideDrawer(word = null) {
-        const drawer = document.getElementById('side-drawer');
-        const overlay = document.getElementById('drawer-overlay');
+    drawer.classList.add('open');
+    overlay.classList.add('active');
+}
 
-        if (word) {
-            document.getElementById('drawer-dict-word').textContent = word;
-            document.getElementById('drawer-dict-def').textContent = "Çevriliyor...";
-            document.getElementById('drawer-dict-phonetic').textContent = "...";
-        }
-
-        drawer.classList.add('open');
-        overlay.classList.add('active');
-    }
-
-    function closeSideDrawer() {
-        document.getElementById('side-drawer').classList.remove('open');
-        document.getElementById('drawer-overlay').classList.remove('active');
-        currentWordData = null;
-        if (window.speechAPI) window.speechAPI.stop();
-    }
-});
+function closeSideDrawer() {
+    document.getElementById('side-drawer').classList.remove('open');
+    document.getElementById('drawer-overlay').classList.remove('active');
+    currentWordData = null;
+    if (window.speechAPI) window.speechAPI.stop();
+}
