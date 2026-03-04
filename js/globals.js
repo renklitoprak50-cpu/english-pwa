@@ -7,8 +7,8 @@ const isPremiumUser = true;
 
 function checkPremiumAction(actionName) {
     if (isPremiumUser) return true;
-    alert(`👑 Premium Feature: ${actionName} is only available to Premium users.`);
-    return false;
+    // V7.8: Unlocked for everyone on Vercel
+    return true;
 }
 
 // Global Language Mappings

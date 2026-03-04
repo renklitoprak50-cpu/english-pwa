@@ -1,5 +1,5 @@
 /**
- * Reader Component Logic V3.4 (Fail-Safe Stabilization API)
+ * Reader Component Logic V4 (Anti-Limited Preview Fix)
  */
 
 let currentBookMeta = null;
@@ -47,14 +47,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (currentBookMeta.type === 'pdf') initPDFReader(bookData.data);
                 else initEpubReader(bookData.data);
 
-            } else if (currentBookMeta.ia_id) {
-                initEmbedReader(currentBookMeta.ia_id);
+            } else if (currentBookMeta.format_url || currentBookMeta.ia_id) {
+                initNativeReader(currentBookMeta);
             } else if (currentBookMeta.audio_url) {
                 document.getElementById('error-viewer').classList.remove('hidden');
                 document.getElementById('error-title').textContent = "🎧 Sadece Sesli Kitap";
                 document.getElementById('error-desc').textContent = "Dinlemek için aşağıdaki oynatıcıyı kullanın.";
             } else {
-                document.getElementById('error-viewer').classList.remove('hidden');
+                showFinalError();
             }
         } else {
             alert("Kitap verisi bulunamadı.");
@@ -65,59 +65,377 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
+function showFinalError() {
+    document.getElementById('error-viewer').classList.remove('hidden');
+    document.getElementById('error-title').textContent = "📖 Kitap Önizlemeye Kapalı";
+    document.getElementById('error-desc').textContent = "Bu kitap telif hakları nedeniyle kapalı, lütfen listenizdeki diğer (Açık kaynaklı) kitapları deneyin.";
+}
+
 // =====================================
-// EMBED LAYER (PLANS B & C) - V3.4
+// NATIVE READER & SONIC TTS (V7.6)
 // =====================================
-function initEmbedReader(ia_id) {
-    const iframe = document.getElementById('embed-viewer');
+let ttsUtterance = null;
+let ttsSpans = [];
+let currentSpanIndex = 0;
+let isPlaying = false;
+
+async function initNativeReader(meta) {
     const fallbackBar = document.getElementById('embed-fallback-bar');
-    const fallbackBtn = document.getElementById('btn-fallback-server');
+    const textLayer = document.getElementById('text-viewer-layer');
+    const textTarget = document.getElementById('text-render-target');
+    const fallbackText = document.getElementById('fallback-text');
+    const ttsController = document.getElementById('tts-controller');
 
     document.getElementById('local-viewer-layer').classList.add('hidden');
     document.getElementById('book-progress').classList.add('hidden');
 
+    // 1. Check Local DB (Single-Fetch constraint)
+    const bookId = meta.id || meta.ia_id;
+    const cachedText = await window.dbAPI.getBookContent(bookId);
+    if (cachedText) {
+        renderNativeText(cachedText, textLayer, textTarget, ttsController);
+        return;
+    }
+
+    // 2. Client-Side Fetch
+    fallbackBar.classList.remove('hidden');
+    if (fallbackText) fallbackText.textContent = "Kitap indiriliyor...";
+    fallbackBar.style.background = 'var(--accent-primary)';
+    fallbackBar.style.color = '#fff';
+    if (textLayer) textLayer.classList.add('hidden');
+
+    try {
+        let textResult = null;
+        let res;
+
+        // V8: Attempt 1 - Format URL from Gutendex via LingoBooks Proxy
+        if (meta.format_url) {
+            const proxyUrl = '/api/proxy?url=' + encodeURIComponent(meta.format_url);
+            res = await fetch(proxyUrl);
+            if (res.ok) {
+                textResult = await res.text();
+                // Strip HTML if it's an HTML format
+                if (meta.format_url.includes('html')) {
+                    const temp = document.createElement('div');
+                    temp.innerHTML = textResult;
+                    textResult = temp.textContent || temp.innerText || "";
+                }
+            }
+        }
+
+        // V8: Attempt 2 - Direct Gutenberg HTML Fallback via LingoBooks Proxy
+        if (!textResult && meta.ia_id) {
+            if (fallbackText) fallbackText.textContent = "Doğrudan Gutenberg bağlantısı deneniyor...";
+            const directHtmlUrl = `https://www.gutenberg.org/files/${meta.ia_id}/${meta.ia_id}-h/${meta.ia_id}-h.htm`;
+            const proxyHtmlUrl = '/api/proxy?url=' + encodeURIComponent(directHtmlUrl);
+
+            res = await fetch(proxyHtmlUrl);
+            if (res.ok) {
+                textResult = await res.text();
+                const temp = document.createElement('div');
+                temp.innerHTML = textResult;
+                textResult = temp.textContent || temp.innerText || "";
+            }
+        }
+
+        // Attempt 3: Fallback Archive.org _djvu.txt & .txt
+        if (!textResult && meta.ia_id) {
+            if (fallbackText) fallbackText.textContent = "Alternatif Arşiv metni aranıyor...";
+            res = await fetch(`https://archive.org/cors/${meta.ia_id}/${meta.ia_id}_djvu.txt`);
+            if (res.ok) textResult = await res.text();
+
+            if (!textResult || textResult.trim().length === 0) {
+                res = await fetch(`https://archive.org/cors/${meta.ia_id}/${meta.ia_id}.txt`);
+                if (res.ok) textResult = await res.text();
+            }
+        }
+
+        if (textResult && textResult.trim().length > 50) {
+            await window.dbAPI.saveBookContent(bookId, textResult);
+            fallbackBar.classList.add('hidden');
+            renderNativeText(textResult, textLayer, textTarget, ttsController);
+        } else {
+            throw new Error("Text not found or empty");
+        }
+    } catch (e) {
+        console.warn("Direct fetch failed", e);
+        if (fallbackText) fallbackText.textContent = "Metin okunamadı, eski sürüm Embed deneniyor...";
+        fallbackBar.style.background = 'var(--warning)';
+        fallbackBar.style.color = '#000';
+        if (meta.ia_id) {
+            const iframe = document.getElementById('embed-viewer');
+            if (iframe) iframe.classList.remove('hidden');
+            loadPlanC(meta.ia_id, iframe, fallbackBar);
+        } else {
+            showFinalError();
+        }
+    }
+}
+
+function renderNativeText(text, layer, target, ttsController) {
+    if (!layer || !target) return;
+    layer.classList.remove('hidden');
+    if (ttsController) ttsController.classList.remove('hidden');
+
+    // Split text into sentences/chunks for TTS and span wrapping
+    // We match sentences ending with . ! ? followed by space or newline
+    const chunks = text.match(/[^.!?]+[.!?]+(\s|$)/g) || [text];
+
+    target.innerHTML = '';
+    ttsSpans = [];
+    currentSpanIndex = 0;
+
+    chunks.forEach((chunk, index) => {
+        const span = document.createElement('span');
+        span.textContent = chunk;
+        span.className = 'tts-chunk cursor-pointer';
+        span.dataset.index = index;
+
+        // Dictionary Support (Click to Translate)
+        span.addEventListener('click', (e) => {
+            const selection = window.getSelection();
+            let word = selection.toString().trim();
+            if (!word) {
+                // Approximate word from click if no selection
+                const range = document.caretRangeFromPoint(e.clientX, e.clientY);
+                if (range) {
+                    range.expand('word');
+                    word = range.toString().trim();
+                }
+            }
+            if (word && word.length > 0) {
+                handleWordSelection(word, chunk.trim());
+            }
+        });
+
+        target.appendChild(span);
+        ttsSpans.push(span);
+    });
+
+    setupSonicTTS(target);
+}
+
+function setupSonicTTS(container) {
+    const playBtn = document.getElementById('tts-play');
+    const stopBtn = document.getElementById('tts-stop');
+    const nextBtn = document.getElementById('tts-next');
+    const prevBtn = document.getElementById('tts-prev');
+
+    if (!window.speechSynthesis) {
+        if (playBtn) playBtn.style.display = 'none';
+        return;
+    }
+
+    const resetPlayBtn = () => {
+        isPlaying = false;
+        if (playBtn) {
+            playBtn.textContent = '▶️';
+            playBtn.classList.remove('active-play');
+        }
+    };
+
+    const setPlayBtnActive = () => {
+        isPlaying = true;
+        if (playBtn) {
+            playBtn.textContent = '⏸';
+            playBtn.classList.add('active-play');
+        }
+    };
+
+    const highlightSpan = (index) => {
+        ttsSpans.forEach(s => s.classList.remove('tts-highlight'));
+        if (ttsSpans[index]) {
+            ttsSpans[index].classList.add('tts-highlight');
+            ttsSpans[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    };
+
+    // V8 Media Session API Integration for Shadowing
+    const updateMediaSession = () => {
+        if ('mediaSession' in navigator) {
+            navigator.mediaSession.metadata = new MediaMetadata({
+                title: currentBookMeta ? currentBookMeta.title : 'LingoBooks',
+                artist: 'Sonic Reader (TTS)',
+                album: 'Shadowing Mode',
+                artwork: [
+                    { src: 'assets/icon-192.png', sizes: '192x192', type: 'image/png' }
+                ]
+            });
+
+            navigator.mediaSession.setActionHandler('play', () => {
+                if (window.speechSynthesis.paused) {
+                    window.speechSynthesis.resume();
+                    setPlayBtnActive();
+                } else if (!isPlaying) {
+                    speakCurrent();
+                }
+                updateMediaSession();
+            });
+
+            navigator.mediaSession.setActionHandler('pause', () => {
+                window.speechSynthesis.pause();
+                resetPlayBtn();
+                updateMediaSession();
+            });
+
+            navigator.mediaSession.setActionHandler('previoustrack', () => {
+                if (currentSpanIndex > 0) {
+                    currentSpanIndex--;
+                    if (isPlaying) speakCurrent();
+                    else highlightSpan(currentSpanIndex);
+                }
+            });
+
+            navigator.mediaSession.setActionHandler('nexttrack', () => {
+                if (currentSpanIndex < ttsSpans.length - 1) {
+                    currentSpanIndex++;
+                    if (isPlaying) speakCurrent();
+                    else highlightSpan(currentSpanIndex);
+                }
+            });
+
+            navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
+        }
+    };
+
+    const speakCurrent = () => {
+        window.speechSynthesis.cancel();
+        if (currentSpanIndex >= ttsSpans.length) {
+            resetPlayBtn();
+            return;
+        }
+
+        const text = ttsSpans[currentSpanIndex].textContent;
+        ttsUtterance = new SpeechSynthesisUtterance(text);
+
+        if (currentBookMeta && currentBookMeta.langMap && currentBookMeta.langMap.speech) {
+            ttsUtterance.lang = currentBookMeta.langMap.speech;
+        } else {
+            ttsUtterance.lang = window.globals.getActiveLanguageMap().speech;
+        }
+
+        ttsUtterance.onstart = () => {
+            highlightSpan(currentSpanIndex);
+        };
+
+        ttsUtterance.onend = () => {
+            if (isPlaying) {
+                currentSpanIndex++;
+                speakCurrent();
+            }
+        };
+
+        ttsUtterance.onerror = (e) => {
+            console.warn("TTS Error", e);
+            resetPlayBtn();
+        };
+
+        window.speechSynthesis.speak(ttsUtterance);
+        setPlayBtnActive();
+    };
+
+    if (playBtn) {
+        // Remove old listeners by cloning
+        const newPlayBtn = playBtn.cloneNode(true);
+        playBtn.parentNode.replaceChild(newPlayBtn, playBtn);
+        newPlayBtn.addEventListener('click', () => {
+            if (isPlaying) {
+                window.speechSynthesis.pause();
+                resetPlayBtn();
+            } else {
+                if (window.speechSynthesis.paused) {
+                    window.speechSynthesis.resume();
+                    setPlayBtnActive();
+                } else {
+                    speakCurrent();
+                }
+            }
+        });
+    }
+
+    if (stopBtn) {
+        const newStopBtn = stopBtn.cloneNode(true);
+        stopBtn.parentNode.replaceChild(newStopBtn, stopBtn);
+        newStopBtn.addEventListener('click', () => {
+            window.speechSynthesis.cancel();
+            resetPlayBtn();
+            ttsSpans.forEach(s => s.classList.remove('tts-highlight'));
+        });
+    }
+
+    if (nextBtn) {
+        const newNextBtn = nextBtn.cloneNode(true);
+        nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
+        newNextBtn.addEventListener('click', () => {
+            if (currentSpanIndex < ttsSpans.length - 1) {
+                currentSpanIndex++;
+                if (isPlaying) speakCurrent();
+                else highlightSpan(currentSpanIndex);
+            }
+        });
+    }
+
+    if (prevBtn) {
+        const newPrevBtn = prevBtn.cloneNode(true);
+        prevBtn.parentNode.replaceChild(newPrevBtn, prevBtn);
+        newPrevBtn.addEventListener('click', () => {
+            if (currentSpanIndex > 0) {
+                currentSpanIndex--;
+                if (isPlaying) speakCurrent();
+                else highlightSpan(currentSpanIndex);
+            }
+        });
+    }
+
+    // V7.8 Action Bar Integrations
+    const startListenBtn = document.getElementById('btn-start-listening');
+    const clearTextBtn = document.getElementById('btn-clear-text');
+
+    if (startListenBtn) {
+        const newStartBtn = startListenBtn.cloneNode(true);
+        startListenBtn.parentNode.replaceChild(newStartBtn, startListenBtn);
+        newStartBtn.addEventListener('click', () => {
+            if (window.speechSynthesis.paused) {
+                window.speechSynthesis.resume();
+                setPlayBtnActive();
+            } else if (!isPlaying) {
+                if (currentSpanIndex >= ttsSpans.length) currentSpanIndex = 0;
+                speakCurrent();
+            }
+        });
+    }
+
+    if (clearTextBtn) {
+        const newClearBtn = clearTextBtn.cloneNode(true);
+        clearTextBtn.parentNode.replaceChild(newClearBtn, clearTextBtn);
+        newClearBtn.addEventListener('click', () => {
+            document.getElementById('text-render-target').innerHTML = '';
+            document.getElementById('text-viewer-layer').classList.add('hidden');
+            window.speechSynthesis.cancel();
+            resetPlayBtn();
+            ttsSpans = [];
+        });
+    }
+}
+
+function loadPlanC(ia_id, iframe, fallbackBar) {
     iframe.classList.remove('hidden');
     fallbackBar.classList.remove('hidden');
 
-    // Fallback UI State Reset
-    fallbackBar.style.background = 'var(--warning)';
-    fallbackBar.style.color = '#000';
+    fallbackBar.style.background = 'var(--primary)';
     fallbackBar.innerHTML = `
-        Görüntü yüklenmediyse: 
-        <button id="btn-fallback-server" class="btn primary" style="padding:4px 8px; font-size:0.8rem; margin-left:10px; background:#000; color:#fff;">
-            Alternatif Sunucuyu Dene (Plan C)
+        Alternatif sunucudasınız.
+        <button id="btn-final-cancel" class="btn text-btn" style="padding:4px 8px; font-size:0.8rem; margin-left:10px; color:#fff;">
+            Hala çalışmıyor mu? İptal (Plan D)
         </button>
     `;
 
-    // V3.4: Reconnect listener due to innerHTML reset
-    const newFallbackBtn = document.getElementById('btn-fallback-server');
+    iframe.src = `https://openlibrary.org/embed/${ia_id}`;
 
-    // Archive.org (Plan B)
-    iframe.src = `https://archive.org/embed/${ia_id}?ui=embed`;
-
-    // Auto hint transition after 6 seconds
-    let hintTimeout = setTimeout(() => {
-        if (newFallbackBtn) newFallbackBtn.style.animation = 'pulse 1.5s infinite';
-    }, 6000);
-
-    // Manual click: Fallback to OpenLibrary (Plan C)
-    newFallbackBtn.addEventListener('click', () => {
-        clearTimeout(hintTimeout);
-        newFallbackBtn.textContent = "Alternatif Yükleniyor...";
-        newFallbackBtn.disabled = true;
-        newFallbackBtn.style.animation = 'none';
-        iframe.src = `https://openlibrary.org/embed/${ia_id}`;
-
-        // Deep fail detection (Plan D)
-        setTimeout(() => {
-            newFallbackBtn.textContent = "Hala çalışmıyor mu? İptal Et (Plan D)";
-            newFallbackBtn.disabled = false;
-            newFallbackBtn.onclick = () => {
-                iframe.classList.add('hidden');
-                fallbackBar.classList.add('hidden');
-                document.getElementById('error-viewer').classList.remove('hidden');
-            };
-        }, 3500);
+    document.getElementById('btn-final-cancel').addEventListener('click', () => {
+        iframe.classList.add('hidden');
+        fallbackBar.classList.add('hidden');
+        showFinalError();
     });
 }
 

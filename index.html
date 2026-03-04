@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Polyglot PWA | V3.4 Install</title>
+    <title>Polyglot PWA | V5 Permanent Cache</title>
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#121212">
@@ -13,6 +13,19 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                    }
+                }
+            }
+        }
+    </script>
     <link rel="stylesheet" href="css/main.css">
 
     <script src="https://cdn.jsdelivr.net/npm/idb@7/build/umd.js"></script>
@@ -21,34 +34,73 @@
 
 <body class="dark-theme">
 
-    <!-- PWA INSTALL BANNER -->
-    <div id="pwa-install-banner" class="hidden"
-        style="background:var(--accent-primary); color:white; padding:12px; text-align:center; font-weight:500; z-index: 1000; position: fixed; top: 0; left: 0; right: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: flex; flex-direction: column; align-items: center; gap: 8px;">
-        <div>
-            <strong>Polyglot Reader'ı Yükle</strong> 🚀<br>
-            <span id="install-instructions" style="font-size: 0.85rem; opacity: 0.9;">Çevrimdışı okumak ve daha hızlı
-                erişim için ana ekrana ekleyin.</span>
-        </div>
-        <div style="display:flex; gap: 10px;">
-            <button id="btn-install-pwa" class="btn"
-                style="background:white; color:var(--accent-primary); padding:4px 12px; font-weight:bold;">Yükle</button>
-            <button id="btn-dismiss-install" class="btn text-btn"
-                style="color:rgba(255,255,255,0.8); padding:4px;">Kapat</button>
-        </div>
-    </div>
-
-    <!-- Push content down if banner is active -->
+    <!-- PWA Install UI Replaced by Dashboard Card in V7.6 -->
     <div class="app-container dashboard layout" id="main-layout">
         <header class="top-nav">
             <div class="brand">
                 <h1>Polyglot<span>Reader</span></h1>
             </div>
-            <div class="actions">
-                <span id="account-status" class="badge">Checking...</span>
+            <div class="actions flex items-center gap-3">
+                <span id="account-status" class="badge">V8 Polyglot</span>
             </div>
         </header>
 
         <main class="dashboard-content">
+
+            <!-- LingoBooks Gamification Profile Bar -->
+            <section id="lingobooks-profile"
+                class="mb-4 bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700 flex flex-wrap gap-4 items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="text-4xl drop-shadow-sm" id="avatar-icon">🥚</div>
+                    <div class="flex flex-col">
+                        <span class="text-sm font-bold text-gray-400 uppercase tracking-wider"
+                            id="avatar-name">Egg</span>
+                        <div class="text-xl font-black text-gray-800 dark:text-gray-100">Level <span
+                                id="player-level">0</span></div>
+                    </div>
+                </div>
+
+                <div class="flex-grow max-w-md mx-4 hidden sm:block">
+                    <div class="flex justify-between text-xs font-bold text-gray-500 mb-1">
+                        <span>XP: <span id="player-xp" class="text-blue-500">0</span></span>
+                        <span>Sonraki: <span id="player-next-xp">100</span></span>
+                    </div>
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden">
+                        <div id="player-xp-bar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-500"
+                            style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="flex gap-4 items-center w-full justify-between sm:w-auto">
+                    <div
+                        class="flex items-center gap-2 bg-orange-50 dark:bg-orange-900/30 px-3 py-1.5 rounded-xl border border-orange-100 dark:border-orange-800">
+                        <span class="text-xl">🔥</span>
+                        <div class="flex flex-col">
+                            <span
+                                class="text-[10px] font-bold text-orange-400 uppercase tracking-widest leading-none">Seri</span>
+                            <span class="text-sm font-black text-orange-600 dark:text-orange-400 leading-tight"><span
+                                    id="player-streak">0</span> Gün</span>
+                        </div>
+                    </div>
+                    <button onclick="if(window.BossFight) window.BossFight.initFight()"
+                        class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-xl shadow-md transition-transform active:scale-95 flex items-center gap-2 text-sm whitespace-nowrap">
+                        <span>👿</span> Boss Fight
+                    </button>
+                </div>
+            </section>
+
+            <!-- V7.6 Stylish Persistent PWA Install UI -->
+            <section id="pwa-install-card" class="glass-panel hidden"
+                style="margin-bottom: 1rem; display:flex; justify-content:space-between; align-items:center; padding: 15px 20px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%); border: 1px solid rgba(59,130,246,0.3);">
+                <div>
+                    <h3 style="margin-bottom: 2px; font-size: 1.1rem; color: #fff;">📱 Uygulamayı Kurun</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0;">Çevrimdışı destek ve sıfır
+                        gecikme için Ana Ekrana ekleyin.</p>
+                </div>
+                <!-- ID is btn-install-pwa which hooks automatically to app.js -->
+                <button id="btn-install-pwa" class="btn primary"
+                    style="font-weight: bold; border-radius: 20px; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4); padding: 6px 16px;">Yükle</button>
+            </section>
 
             <!-- Elite Omni Search Bar -->
             <section class="search-section glass-panel">
@@ -61,8 +113,21 @@
                     <div id="search-spinner" class="spinner hidden"></div>
                 </div>
 
-                <!-- V4 Multi-Language Filters UI -->
-                <div class="search-filters mt-3">
+                <!-- V6.1 DUAL TAB NAVIGATION -->
+                <div class="search-tabs mt-3">
+                    <button class="btn tab-btn active" data-tab="verified">💎 Kütüphanem</button>
+                    <button class="btn tab-btn" data-tab="global">🌍 Küresel Keşif</button>
+                </div>
+
+                <!-- V6.5 KÜTÜPHANEM SHELVES (Default View) -->
+                <div id="kutuphanem-container" class="mt-4 block">
+                    <div id="shelves-container">
+                        <!-- Dynamically populated by app.js -->
+                    </div>
+                </div>
+
+                <!-- V4 Multi-Language Filters UI (For Global Search) -->
+                <div id="global-search-container" class="search-filters mt-3 hidden">
                     <div class="filter-group mb-2"
                         style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; margin-bottom: 8px;">
                         <span class="filter-label" style="color:var(--accent-primary);">İçerik Dili:</span>
@@ -88,62 +153,90 @@
                         </div>
                     </div>
                 </div>
-            </section>
+    </div>
+    </div>
+    </section>
 
-            <div id="search-results-container" class="hidden glass-panel">
-                <div class="section-header">
-                    <h3>Arama Sonuçları</h3>
-                    <button id="close-search" class="btn text-btn">Kapat</button>
-                </div>
-                <div class="books-grid" id="search-results-grid"></div>
+    <div id="search-results-container" class="hidden glass-panel mt-3">
+        <div class="section-header">
+            <h3>Arama Sonuçları</h3>
+            <button id="close-search" class="btn text-btn">Kapat</button>
+        </div>
+        <div class="books-grid" id="search-results-grid"></div>
+    </div>
+
+    <!-- Dashboard Stats -->
+    <section class="stats-overview">
+        <div class="stat-card glass-panel">
+            <div class="stat-info">
+                <h3>Öğrenilen Kelime</h3>
+                <p class="stat-number" id="total-words">0</p>
             </div>
+        </div>
 
-            <!-- Dashboard Stats -->
-            <section class="stats-overview">
-                <div class="stat-card glass-panel">
-                    <div class="stat-info">
-                        <h3>Öğrenilen Kelime</h3>
-                        <p class="stat-number" id="total-words">0</p>
-                    </div>
-                </div>
+        <div class="stat-card glass-panel">
+            <div class="stat-info">
+                <h3>Kapasite</h3>
+                <p class="stat-number">Sınırsız <span id="local-uploads-limit">Yerel Yükleme</span></p>
+            </div>
+        </div>
+    </section>
 
-                <div class="stat-card glass-panel">
-                    <div class="stat-info">
-                        <h3>Kapasite</h3>
-                        <p class="stat-number">Sınırsız <span id="local-uploads-limit">Yerel Yükleme</span></p>
-                    </div>
-                </div>
-            </section>
+    <!-- Upload Area -->
+    <section class="action-section glass-panel">
+        <h2 class="section-title">Kendi Kitabını Yükle</h2>
+        <p class="section-desc">Cihazınızdaki bir EPUB veya PDF dosyasını yükleyip Türkçe sözlükle okuyun.</p>
+        <div class="file-upload-wrapper mt-3">
+            <label for="epub-upload" class="btn primary full-width upload-btn" id="upload-label">
+                Dosya Seç (EPUB/PDF)
+            </label>
+            <input type="file" id="epub-upload" accept=".epub,.pdf" class="hidden-input">
+        </div>
+    </section>
 
-            <!-- Upload Area -->
-            <section class="action-section glass-panel">
-                <h2 class="section-title">Kendi Kitabını Yükle</h2>
-                <p class="section-desc">Cihazınızdaki bir EPUB veya PDF dosyasını yükleyip Türkçe sözlükle okuyun.</p>
-                <div class="file-upload-wrapper mt-3">
-                    <label for="epub-upload" class="btn primary full-width upload-btn" id="upload-label">
-                        Dosya Seç (EPUB/PDF)
-                    </label>
-                    <input type="file" id="epub-upload" accept=".epub,.pdf" class="hidden-input">
-                </div>
-            </section>
+    <!-- Showcases -->
+    <section class="showcase-section">
+        <div class="library-shelf mt-4">
+            <h2 class="section-title">Çevrimdışı Kütüphanem</h2>
+            <div class="books-horizontal" id="offline-books-grid">
+                <div class="empty-state">Henüz yerel olarak kaydedilmiş bir kitabınız bulunmuyor.</div>
+            </div>
+        </div>
+    </section>
 
-            <!-- Showcases -->
-            <section class="showcase-section">
-                <div class="library-shelf mt-4">
-                    <h2 class="section-title">Çevrimdışı Kütüphanem</h2>
-                    <div class="books-horizontal" id="offline-books-grid">
-                        <div class="empty-state">Henüz yerel olarak kaydedilmiş bir kitabınız bulunmuyor.</div>
-                    </div>
-                </div>
-            </section>
-
-        </main>
+    </main>
     </div>
 
     <script src="js/globals.js"></script>
     <script src="js/db.js"></script>
+    <script src="js/gamification.js"></script>
+    <script src="js/boss.js"></script>
     <script src="js/library.js"></script>
     <script src="js/app.js"></script>
+    <script>
+        // Bind UI Elements
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.GameEngine) {
+                window.GameEngine.onUpdate((state) => {
+                    const elLevel = document.getElementById('player-level');
+                    const elXP = document.getElementById('player-xp');
+                    const elNext = document.getElementById('player-next-xp');
+                    const elBar = document.getElementById('player-xp-bar');
+                    const elIcon = document.getElementById('avatar-icon');
+                    const elName = document.getElementById('avatar-name');
+                    const elStreak = document.getElementById('player-streak');
+
+                    if (elLevel) elLevel.textContent = state.level;
+                    if (elXP) elXP.textContent = state.xp;
+                    if (elNext) elNext.textContent = state.nextLevelXP;
+                    if (elBar) elBar.style.width = state.progressPercent + '%';
+                    if (elIcon) elIcon.textContent = state.avatarIcon;
+                    if (elName) elName.textContent = state.avatarName;
+                    if (elStreak) elStreak.textContent = state.streak;
+                });
+            }
+        });
+    </script>
 </body>
 
 </html>
