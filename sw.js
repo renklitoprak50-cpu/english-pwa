@@ -1,4 +1,4 @@
-const CACHE_NAME = 'english-reader-pwa-v14-zerobug';
+const CACHE_NAME = 'english-reader-pwa-v15-singlefile';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -35,6 +35,11 @@ self.addEventListener('activate', (event) => {
 
 // Fetch Event - EMERGENCY RESET
 self.addEventListener('fetch', (event) => {
+  // 1. Dış API'leri kesin engelle (Zero-Bug Build Bypass)
+  if (event.request.url.includes('google') || event.request.url.includes('allorigins') || event.request.url.includes('corsproxy')) {
+    return;
+  }
+
   // Only intercept GET requests
   if (event.request.method !== 'GET') return;
 

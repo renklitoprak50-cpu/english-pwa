@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -28,9 +28,1089 @@
             }
         }
     </script>
-    <link rel="stylesheet" href="css/main.css">
+    <style>
+        /* --- Inlined: css/main.css --- */
+        /**
+ * Main Stylesheet - English Reader PWA V3
+ * Maximum Accessibility & Hybrid Audio Player
+ */
 
-    <script src="js/globals.js"></script>
+        :root {
+            --bg-base: #0B0E14;
+            --bg-panel: #151A22;
+            --bg-surface: #1E2530;
+
+            --text-primary: #E2E8F0;
+            --text-secondary: #94A3B8;
+            --text-muted: #64748B;
+
+            --accent-primary: #3B82F6;
+            --accent-hover: #2563EB;
+
+            --success: #10B981;
+            --warning: #F59E0B;
+            --combo: #8B5CF6;
+            /* Purple for Combos */
+
+            --font-ui: 'Inter', sans-serif;
+
+            --radius-sm: 6px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+
+            --spacing-2: 0.5rem;
+            --spacing-3: 0.75rem;
+            --spacing-4: 1rem;
+            --spacing-6: 1.5rem;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            font-family: var(--font-ui);
+            line-height: 1.6;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            color: #fff;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        .truncate {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .mt-2 {
+            margin-top: 0.5rem;
+        }
+
+        .mt-3 {
+            margin-top: 1rem;
+        }
+
+        .mt-4 {
+            margin-top: var(--spacing-6);
+        }
+
+        .cursor-pointer {
+            cursor: pointer;
+        }
+
+        /* Layouts & Panels */
+        .layout {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: var(--spacing-4);
+        }
+
+        .glass-panel {
+            background: var(--bg-panel);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: var(--radius-md);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.2rem;
+            border-radius: var(--radius-sm);
+            font-weight: 500;
+            font-size: 0.95rem;
+            border: none;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn.primary {
+            background: var(--accent-primary);
+            color: white;
+        }
+
+        .btn.primary:not(:disabled):hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn.secondary {
+            background: var(--bg-surface);
+            color: white;
+        }
+
+        .btn.text-btn {
+            background: transparent;
+            color: var(--accent-primary);
+            padding: 0.25rem 0.5rem;
+        }
+
+        .btn.text-btn:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        .btn.text-btn.active {
+            background: rgba(59, 130, 246, 0.2);
+            color: white;
+        }
+
+        .full-width {
+            width: 100%;
+        }
+
+        .icon-btn {
+            background: transparent;
+            color: var(--text-secondary);
+            padding: 0.5rem;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+        }
+
+        .hidden-input {
+            display: none;
+        }
+
+        /* Dashboard UI */
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+        }
+
+        .brand h1 {
+            font-size: 1.5rem;
+        }
+
+        .brand span {
+            color: var(--accent-primary);
+        }
+
+        .badge {
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Search & Filters */
+        .search-section {
+            padding: var(--spacing-3) var(--spacing-4);
+            margin-bottom: var(--spacing-4);
+        }
+
+        .search-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+        }
+
+        .search-bar input {
+            flex-grow: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            padding: 0.5rem 0;
+        }
+
+        .search-bar svg {
+            color: var(--text-muted);
+        }
+
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--accent-primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* V6.1 DUAL SEARCH TABS */
+        .search-tabs {
+            display: flex;
+            gap: 0.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .tab-btn {
+            background: transparent;
+            color: var(--text-muted);
+            border: none;
+            border-bottom: 2px solid transparent;
+            border-radius: 0;
+            padding: 0.5rem 0.5rem;
+            font-weight: 600;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active {
+            color: var(--accent-primary);
+            border-bottom-color: var(--accent-primary);
+        }
+
+        .search-filters {
+            font-size: 0.9rem;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-label {
+            color: var(--text-muted);
+            font-weight: 500;
+            min-width: 50px;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            background: var(--bg-surface);
+            color: var(--text-secondary);
+            padding: 0.4rem 0.8rem;
+            font-size: 0.85rem;
+            border-radius: 20px;
+        }
+
+        .filter-btn.active {
+            background: var(--accent-primary);
+            color: white;
+        }
+
+        /* Book Shelves */
+        .stats-overview {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: var(--spacing-6);
+        }
+
+        .stat-card {
+            padding: 1rem;
+        }
+
+        .stat-info h3 {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 0.2rem;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .library-shelf {
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+        }
+
+        .books-horizontal {
+            display: flex;
+            gap: 1rem;
+            overflow-x: auto;
+            padding-bottom: 1rem;
+            scroll-snap-type: x mandatory;
+        }
+
+        .books-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 1rem;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .book-card {
+            flex: 0 0 160px;
+            width: 160px;
+            scroll-snap-align: start;
+            display: flex;
+            flex-direction: column;
+            overflow: visible;
+            padding-bottom: 0.5rem;
+            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            background: transparent;
+        }
+
+        .book-card:hover {
+            transform: translateY(-8px) scale(1.02);
+        }
+
+        .book-cover {
+            height: 220px;
+            background-color: var(--bg-surface);
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            border-radius: 8px;
+            box-shadow: 6px 8px 15px rgba(0, 0, 0, 0.4), inset -2px 0 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .book-meta {
+            padding: 0.8rem 0.2rem 0;
+        }
+
+        .book-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.1rem;
+        }
+
+        .book-author {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* V6.1 MODERATION ACTIONS */
+        .book-actions {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem;
+            margin-top: auto;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .action-verify,
+        .action-hide {
+            background: transparent;
+            border: none;
+            font-size: 0.8rem;
+            cursor: pointer;
+            border-radius: 4px;
+            padding: 2px 6px;
+            transition: 0.2s;
+        }
+
+        .action-verify {
+            color: var(--success);
+        }
+
+        .action-verify:hover {
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .action-hide {
+            color: var(--text-muted);
+        }
+
+        .action-hide:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+        }
+
+        .level-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(0, 0, 0, 0.8);
+            color: var(--warning);
+            font-size: 0.65rem;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .audio-badge {
+            position: absolute;
+            bottom: 8px;
+            left: 8px;
+            font-size: 0.65rem;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: white;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .audio-badge.combo-badge {
+            background: var(--combo);
+            border-color: var(--combo);
+        }
+
+        .empty-state {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-style: italic;
+            width: 100%;
+            text-align: center;
+            padding: 2rem 0;
+        }
+
+        /* V6.5 GUTENBERG HORIZONTAL SHELVES */
+        .shelf-row {
+            margin-bottom: 2rem;
+        }
+
+        .shelf-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            color: white;
+            font-weight: 600;
+        }
+
+        .shelf-books {
+            display: flex;
+            gap: 1.5rem;
+            overflow-x: auto;
+            padding-bottom: 2rem;
+            padding-top: 1rem;
+            padding-left: 0.5rem;
+            scroll-snap-type: x mandatory;
+            scrollbar-width: none;
+            /* Firefox */
+        }
+
+        .shelf-books::-webkit-scrollbar {
+            display: none;
+            /* Safari and Chrome */
+        }
+
+        .gutenberg-badge {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: rgba(0, 0, 0, 0.85);
+            color: #FACC15;
+            /* Yellow/Gold */
+            font-size: 0.65rem;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid rgba(250, 204, 21, 0.3);
+            z-index: 2;
+        }
+
+        .lang-flag {
+            margin-right: 5px;
+            font-size: 1.1em;
+        }
+
+        .action-section {
+            padding: var(--spacing-4);
+            margin-bottom: 2rem;
+        }
+
+        /* ====================================================
+   V8 ELITE RESTORATION: FLOATING UI & PAGINATION
+   ==================================================== */
+        .floating-ui {
+            position: fixed;
+            z-index: 50;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            opacity: 0;
+            pointer-events: none;
+            left: 0;
+            right: 0;
+            width: 100%;
+        }
+
+        .floating-ui.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .floating-top {
+            top: 0;
+            transform: translateY(-100%);
+        }
+
+        .floating-top.active {
+            transform: translateY(0);
+        }
+
+        .floating-bottom {
+            bottom: 0;
+            transform: translateY(100%);
+        }
+
+        .floating-bottom.active {
+            transform: translateY(0);
+        }
+
+        /* V8 Pure Pagination Engine */
+        #text-scroll-area {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            /* Hide scrollbars completely */
+            position: relative;
+            box-sizing: border-box;
+            padding: 0;
+        }
+
+        #text-render-target {
+            column-width: 100vw;
+            column-gap: 0;
+            height: 100%;
+            padding: 40px 8vw;
+            /* Inner padding inside the column viewport */
+            box-sizing: border-box;
+            transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            /* Smooth Apple-like swiping */
+        }
+
+        /* Left / Right / Center Tap Zones */
+        .tap-zone {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            z-index: 10;
+        }
+
+        .tap-zone-left {
+            left: 0;
+            width: 30%;
+            cursor: w-resize;
+        }
+
+        .tap-zone-right {
+            right: 0;
+            width: 30%;
+            cursor: e-resize;
+        }
+
+        .tap-zone-center {
+            left: 30%;
+            right: 30%;
+            width: 40%;
+            cursor: pointer;
+        }
+
+        /* ====================================================
+   HYBRID READER UI (V3 Sync View)
+   ==================================================== */
+        .reader-wrapper {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: #000;
+            overflow: hidden;
+        }
+
+        .reader-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            background: var(--bg-panel);
+            z-index: 10;
+        }
+
+        .book-info {
+            text-align: center;
+            flex-grow: 1;
+            margin: 0 1rem;
+        }
+
+        .book-info h2 {
+            font-size: 1rem;
+            margin-bottom: 4px;
+        }
+
+        .progress-bar {
+            height: 3px;
+            background: var(--bg-base);
+            border-radius: 2px;
+            max-width: 200px;
+            margin: 0 auto;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--accent-primary);
+        }
+
+        .book-viewer {
+            flex-grow: 1;
+            position: relative;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .epub-container {
+            flex-grow: 1;
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .nav-btn {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 15vw;
+            max-width: 80px;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.2);
+            border: none;
+            z-index: 5;
+        }
+
+        .nav-btn.prev {
+            left: 0;
+        }
+
+        .nav-btn.next {
+            right: 0;
+        }
+
+        .nav-btn:hover {
+            color: rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        #pdf-canvas {
+            display: block;
+            margin: 0 auto;
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        /* AUDIO COMBO DECK */
+        .audio-deck {
+            flex-shrink: 0;
+            /* Sticky to bottom */
+            padding: 1rem;
+            background: var(--bg-panel);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+        }
+
+        .audio-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .audio-controls audio {
+            width: 100%;
+            outline: none;
+            border-radius: 40px;
+        }
+
+        .speed-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+        }
+
+        .speed-label {
+            color: var(--text-muted);
+        }
+
+        /* DICTIONARY MODAL */
+        .dict-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(3px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            z-index: 100;
+        }
+
+        .modal-content {
+            width: 100%;
+            max-width: 400px;
+            padding: 1.5rem;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .dict-phonetic {
+            color: var(--accent-primary);
+            font-family: monospace;
+            margin-bottom: 1rem;
+        }
+
+        .definition {
+            font-size: 1.05rem;
+            margin-bottom: 1rem;
+        }
+
+        .context-box {
+            background: var(--bg-base);
+            padding: 0.75rem;
+            border-left: 2px solid var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        /* Scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* V8 ELITE READER THEME (Apple Books Style Sepia) */
+        body.sepia-theme {
+            --bg-base: #fbf0d9;
+            --bg-panel: #f4e8cd;
+            --bg-surface: #eaddc5;
+            --text-primary: #3d3024;
+            --text-secondary: #705a41;
+            --text-muted: #9d8c76;
+            --accent-primary: #c26922;
+        }
+
+        body.reader-mode {
+            background-color: var(--bg-base, #fbf0d9);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        body.sepia-theme .reader-toolbar {
+            background: var(--bg-panel);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        body.sepia-theme .nav-btn {
+            color: rgba(0, 0, 0, 0.2);
+        }
+
+        body.sepia-theme .nav-btn:hover {
+            color: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        body.sepia-theme .icon-btn {
+            color: var(--text-secondary);
+        }
+
+        body.sepia-theme h1,
+        body.sepia-theme h2,
+        body.sepia-theme h3,
+        body.sepia-theme h4 {
+            color: var(--text-primary);
+        }
+
+        /* TTS Highlight */
+        .tts-highlight {
+            background-color: rgba(250, 204, 21, 0.6);
+            border-radius: 4px;
+            padding: 0 2px;
+            transition: background-color 0.1s ease;
+        }
+
+        /* Elite Reader Text Area */
+        #text-viewer-layer {
+            font-family: 'Merriweather', 'Lora', serif !important;
+            font-size: 1.25rem !important;
+            line-height: 1.9 !important;
+            color: var(--text-primary) !important;
+            text-align: justify !important;
+            padding: 0 !important;
+            /* Will be managed by scroll area */
+            max-width: 100%;
+        }
+
+        /* Add TTS Control Bar */
+        .tts-controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-surface);
+            border-radius: 30px;
+            margin: 10px auto;
+            width: fit-content;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .tts-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-primary);
+            transition: 0.2s;
+        }
+
+        .tts-btn:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .tts-btn.active-play {
+            color: var(--accent-primary);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        /* =========================================
+   V8 EPUB RENDER CONTAINER
+========================================= */
+        .epub-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 50;
+            /* Forced Above Background */
+            background: transparent !important;
+        }
+
+        #epub-render-target {
+            width: 100%;
+            height: 100%;
+            flex-grow: 1;
+            overflow: hidden;
+            position: relative;
+            z-index: 50;
+            /* Forced Above Background */
+            background: transparent !important;
+        }
+
+        #text-viewer-layer {
+            display: none !important;
+            /* Disabled text parser */
+        }
+
+        /* =========================================
+   V8 ELITE SIDE DRAWER
+========================================= */
+        .side-drawer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 320px;
+            height: 100vh;
+            background: #111;
+            color: #eee;
+            z-index: 1000;
+            transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .side-drawer.open {
+            transform: translateX(0);
+        }
+
+        .drawer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .drawer-header h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .drawer-section {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .drawer-section h4 {
+            color: var(--warning);
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+
+        .theme-btn.active {
+            border: 2px solid var(--accent-primary) !important;
+            box-shadow: 0 0 8px var(--accent-primary);
+        }
+
+        .drawer-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s;
+        }
+
+        .drawer-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* =========================================
+   V8 EPUB SLIDER
+========================================= */
+        #epub-slider {
+            appearance: none;
+            -webkit-appearance: none;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+            outline: none;
+        }
+
+        #epub-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--warning);
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+        }
+    </style>
+
+    <script>
+        /* --- Inlined: js/globals.js --- */
+        /**
+         * Global State & V4 Multi-Language Engine
+         * V4 Rule: Maximum Accessibility + Polyglot Translation Mapping
+         */
+
+        const isPremiumUser = true;
+
+        function checkPremiumAction(actionName) {
+            if (isPremiumUser) return true;
+            // V7.8: Unlocked for everyone on Vercel
+            return true;
+        }
+
+        // Global Language Mappings
+        // ol: OpenLibrary 3-letter code
+        // mymem: MyMemory 2-letter code
+        // speech: Web Speech API BCP 47 Locale
+        // label: LibriVox Array filtering target
+        const SUPPORTED_LANGS = {
+            'en': { ol: 'eng', mymem: 'en', speech: 'en-US', label: 'English' },
+            'de': { ol: 'ger', mymem: 'de', speech: 'de-DE', label: 'German' },
+            'fr': { ol: 'fre', mymem: 'fr', speech: 'fr-FR', label: 'French' },
+            'es': { ol: 'spa', mymem: 'es', speech: 'es-ES', label: 'Spanish' },
+            'tr': { ol: 'tur', mymem: 'tr', speech: 'tr-TR', label: 'Turkish' },
+            'it': { ol: 'ita', mymem: 'it', speech: 'it-IT', label: 'Italian' }
+        };
+
+        // Application Language State (Persisted)
+        let activeContentLang = localStorage.getItem('contentLanguage') || 'en';
+
+        function setContentLanguage(langKey) {
+            if (SUPPORTED_LANGS[langKey]) {
+                activeContentLang = langKey;
+                localStorage.setItem('contentLanguage', langKey);
+            }
+        }
+
+        function getActiveLanguageMap() {
+            return SUPPORTED_LANGS[activeContentLang] || SUPPORTED_LANGS['en'];
+        }
+
+        window.globals = {
+            isPremium: isPremiumUser,
+            checkPremiumAction,
+            SUPPORTED_LANGS,
+            setContentLanguage,
+            getActiveLanguageMap,
+            get activeContentLang() { return activeContentLang; }
+        };
+
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/idb@7/build/umd.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
@@ -96,6 +1176,21 @@
         <!-- Main Reading Area (Multi-Layer) -->
         <main class="book-viewer relative" id="main-viewer">
 
+            <!-- CRITICAL ERROR PANEL (Zero-Bug Build) -->
+            <div id="critical-error-panel" class="hidden"
+                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; color: #ff4444; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; padding: 20px; text-align: center;">
+                <h1 style="font-size: 2rem; margin-bottom: 20px;">⚠️ SİSTEM HATASI</h1>
+                <p id="critical-error-message"
+                    style="font-size: 1.2rem; font-family: monospace; background: rgba(255,0,0,0.1); padding: 15px; border-radius: 8px; border: 1px solid #ff4444;">
+                    Bilinmeyen Hata</p>
+                <button onclick="window.location.reload(true)"
+                    style="margin-top: 30px; padding: 10px 20px; background: #ff4444; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Sistemi
+                    Yeniden Başlat</button>
+                <button onclick="window.location.href='index.html'"
+                    style="margin-top: 15px; padding: 10px 20px; background: transparent; color: #fff; border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; cursor: pointer;">Kütüphaneye
+                    Dön</button>
+            </div>
+
             <!-- LAYER A: LOCAL BOOKS (EPUB/PDF) -->
             <div id="local-viewer-layer" class="epub-container relative hidden">
                 <button id="prev-page" class="nav-btn prev fade" aria-label="Previous">
@@ -103,7 +1198,8 @@
                         <polyline points="15 18 9 12 15 6"></polyline>
                     </svg>
                 </button>
-                <div id="epub-render-target"></div>
+                <div id="epub-render-target"
+                    style="z-index: 100 !important; position: relative; width: 100%; height: 100%;"></div>
                 <canvas id="pdf-canvas" class="hidden"></canvas>
                 <button id="next-page" class="nav-btn next fade" aria-label="Next">
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -221,12 +1317,1745 @@
     </div>
     <div id="drawer-overlay" class="drawer-overlay"></div>
 
-    <script src="js/db.js"></script>
-    <script src="js/gamification.js"></script>
-    <script src="js/boss.js"></script>
-    <script src="js/dictionary.js"></script>
-    <script src="js/speech.js"></script>
-    <script src="js/reader.js"></script>
+    <script>
+        /* --- Inlined: js/db.js --- */
+        // Wraps IndexedDB using the idb library
+        const DB_NAME = 'EnglishReaderDB_V2';
+        const DB_VERSION = 7; // Bumped for V8 LingoBooks Gamification
+
+        let dbPromise;
+
+        // Initialize Database
+        async function initDB() {
+            if (dbPromise) return dbPromise;
+
+            if (!window.idb) {
+                console.warn("idb library not loaded yet.");
+                return null;
+            }
+
+            dbPromise = idb.openDB(DB_NAME, DB_VERSION, {
+                upgrade(db, oldVersion, newVersion, transaction) {
+                    if (!db.objectStoreNames.contains('words')) {
+                        const store = db.createObjectStore('words', { keyPath: 'id', autoIncrement: true });
+                        store.createIndex('word', 'word', { unique: false });
+                        store.createIndex('timestamp', 'timestamp', { unique: false });
+                    }
+
+                    if (!db.objectStoreNames.contains('progress')) {
+                        db.createObjectStore('progress', { keyPath: 'bookId' });
+                    }
+
+                    // V2: Store actual Book ArrayBuffers for true offline
+                    if (!db.objectStoreNames.contains('books')) {
+                        db.createObjectStore('books', { keyPath: 'id' });
+                    }
+
+                    // V5: Permanent Language Cache
+                    if (!db.objectStoreNames.contains('languageCache')) {
+                        db.createObjectStore('languageCache', { keyPath: 'bookId' });
+                    }
+
+                    // V6.1: Dual Hub Stores
+                    if (!db.objectStoreNames.contains('verifiedBooks')) {
+                        db.createObjectStore('verifiedBooks', { keyPath: 'id' });
+                    }
+                    if (!db.objectStoreNames.contains('blacklist')) {
+                        db.createObjectStore('blacklist', { keyPath: 'id' });
+                    }
+
+                    // V6.2: Local Vault for Zero Latency Searches
+                    if (!db.objectStoreNames.contains('localLibrary')) {
+                        db.createObjectStore('localLibrary', { keyPath: 'queryKey' });
+                    }
+
+                    // V6.5: Gutenberg Auto-Shelves
+                    if (!db.objectStoreNames.contains('gutenbergShelves')) {
+                        db.createObjectStore('gutenbergShelves', { keyPath: 'lang' });
+                    }
+
+                    // V7: Single-Fetch Book Content
+                    if (!db.objectStoreNames.contains('bookContent')) {
+                        db.createObjectStore('bookContent', { keyPath: 'id' });
+                    }
+
+                    // V8 (LingoBooks): Gamification Profile
+                    if (!db.objectStoreNames.contains('userProfile')) {
+                        db.createObjectStore('userProfile', { keyPath: 'id' });
+                    }
+                },
+            });
+
+            return dbPromise;
+        }
+
+        // Word Operations
+        async function saveWord(word, contextSentence, definitionData) {
+            const db = await initDB();
+            if (!db) return;
+
+            // Check if word already exists to preserve counts
+            const tx = db.transaction('words', 'readwrite');
+            const store = tx.objectStore('words');
+            const index = store.index('word');
+            const existing = await index.get(word.toLowerCase().trim());
+
+            let wData = {
+                word: word.toLowerCase().trim(),
+                context: contextSentence,
+                definition: definitionData,
+                timestamp: Date.now(),
+                correctCount: existing ? existing.correctCount || 0 : 0,
+                errorCount: existing ? existing.errorCount || 0 : 0
+            };
+
+            if (existing && existing.id) {
+                wData.id = existing.id;
+            }
+
+            await store.put(wData);
+            await tx.done;
+        }
+
+        async function getAllWords() {
+            const db = await initDB();
+            if (!db) return [];
+            return db.getAllFromIndex('words', 'timestamp');
+        }
+
+        async function deleteWord(id) {
+            const db = await initDB();
+            if (!db) return;
+            return db.delete('words', id);
+        }
+
+        // Progress Operations
+        async function saveProgress(bookId, locationOrPage) {
+            const db = await initDB();
+            if (!db) return;
+            return db.put('progress', {
+                bookId,
+                location: locationOrPage,
+                lastRead: Date.now()
+            });
+        }
+
+        async function getProgress(bookId) {
+            const db = await initDB();
+            if (!db) return null;
+            return db.get('progress', bookId);
+        }
+
+        // Book Storage Operations (True Offline)
+        async function saveBook(id, arrayBuffer, metadata) {
+            const db = await initDB();
+            if (!db) return;
+            return db.put('books', {
+                id,
+                data: arrayBuffer,
+                meta: metadata,
+                timestamp: Date.now()
+            });
+        }
+
+        async function getBook(id) {
+            const db = await initDB();
+            if (!db) return null;
+            return db.get('books', id);
+        }
+
+        async function deleteBook(id) {
+            const db = await initDB();
+            if (!db) return;
+            return db.delete('books', id);
+        }
+
+        // Track local upload count
+        async function getLocalBookCount() {
+            const db = await initDB();
+            if (!db) return 0;
+            const allBooks = await db.getAll('books');
+            return allBooks.filter(b => b.id.startsWith('local_')).length;
+        }
+
+        // V5: Language Cache Operations
+        async function cacheLanguage(bookId, langCode) {
+            const db = await initDB();
+            if (!db) return;
+            return db.put('languageCache', {
+                bookId,
+                verifiedLanguage: langCode
+            });
+        }
+
+        async function getCachedLanguage(bookId) {
+            const db = await initDB();
+            if (!db) return null;
+            const record = await db.get('languageCache', bookId);
+            return record ? record.verifiedLanguage : null;
+        }
+
+        // V6.1: Dual Hub Operations (Verification & Blacklist)
+        async function verifyBook(meta) {
+            const db = await initDB();
+            if (!db) return;
+            return db.put('verifiedBooks', {
+                id: meta.id,
+                meta: meta,
+                timestamp: Date.now()
+            });
+        }
+
+        async function getVerifiedBooks() {
+            const db = await initDB();
+            if (!db) return [];
+            return db.getAll('verifiedBooks');
+        }
+
+        async function blacklistBook(id) {
+            const db = await initDB();
+            if (!db) return;
+            return db.put('blacklist', {
+                id: id,
+                timestamp: Date.now()
+            });
+        }
+
+        async function getBlacklist() {
+            const db = await initDB();
+            if (!db) return [];
+            const BL = await db.getAll('blacklist');
+            return BL.map(b => b.id);
+        }
+
+        // V6.2: Local Vault (Zero Latency Search Engine)
+        async function cacheSearchResults(queryKey, resultsArray) {
+            const db = await initDB();
+            if (!db) return;
+            return db.put('localLibrary', {
+                queryKey: queryKey,
+                results: resultsArray,
+                timestamp: Date.now()
+            });
+        }
+
+        async function getCachedSearchResults(queryKey) {
+            const db = await initDB();
+            if (!db) return null;
+            const record = await db.get('localLibrary', queryKey);
+            return record ? record.results : null;
+        }
+
+        // V6.5: Gutenberg Shelves Cache
+        async function saveGutenbergShelf(lang, booksArray) {
+            const db = await initDB();
+            if (!db) return;
+            return db.put('gutenbergShelves', {
+                lang: lang,
+                books: booksArray,
+                timestamp: Date.now()
+            });
+        }
+
+        async function getGutenbergShelf(lang) {
+            const db = await initDB();
+            if (!db) return null;
+            const record = await db.get('gutenbergShelves', lang);
+            return record ? record.books : null;
+        }
+
+        // V7: Single-Fetch Book Content Operations
+        async function saveBookContent(id, text) {
+            const db = await initDB();
+            if (!db) return;
+            return db.put('bookContent', {
+                id: id,
+                text: text,
+                timestamp: Date.now()
+            });
+        }
+
+        async function getBookContent(id) {
+            const db = await initDB();
+            if (!db) return null;
+            const record = await db.get('bookContent', id);
+            return record ? record.text : null;
+        }
+
+        // V8 (LingoBooks): Gamification Operations
+        async function getUserProfile() {
+            const db = await initDB();
+            if (!db) return null;
+            let profile = await db.get('userProfile', 'me');
+            if (!profile) {
+                profile = {
+                    id: 'me',
+                    xp: 0,
+                    level: 0,
+                    streak: 0,
+                    lastActiveDate: null
+                };
+                await db.put('userProfile', profile);
+            }
+            return profile;
+        }
+
+        async function saveUserProfile(profileData) {
+            const db = await initDB();
+            if (!db) return;
+            profileData.id = 'me';
+            return db.put('userProfile', profileData);
+        }
+
+        async function updateWordCount(id, isCorrect) {
+            const db = await initDB();
+            if (!db) return null;
+            const tx = db.transaction('words', 'readwrite');
+            const store = tx.objectStore('words');
+            const wordRecord = await store.get(id);
+            if (wordRecord) {
+                if (isCorrect) {
+                    wordRecord.correctCount = (wordRecord.correctCount || 0) + 1;
+                } else {
+                    wordRecord.errorCount = (wordRecord.errorCount || 0) + 1;
+                }
+                await store.put(wordRecord);
+            }
+            await tx.done;
+            return wordRecord;
+        }
+
+        // Expose globally
+        window.dbAPI = {
+            initDB,
+            saveWord,
+            getAllWords,
+            deleteWord,
+            saveProgress,
+            getProgress,
+            saveBook,
+            getBook,
+            deleteBook,
+            getLocalBookCount,
+            cacheLanguage,
+            getCachedLanguage,
+            verifyBook,
+            getVerifiedBooks,
+            blacklistBook,
+            getBlacklist,
+            cacheSearchResults,
+            getCachedSearchResults,
+            saveGutenbergShelf,
+            getGutenbergShelf,
+            saveBookContent,
+            getBookContent,
+            getUserProfile,
+            saveUserProfile,
+            updateWordCount
+        };
+
+    </script>
+    <script>
+        /* --- Inlined: js/gamification.js --- */
+        /**
+         * LingoBooks - Avatar & XP Gamification Engine
+         * Handles XP gaining, Level calculation, Streaks, and Avatar evolution mapping.
+         */
+
+        const AVATAR_STAGES = [
+            { minLevel: 0, icon: '🥚', name: 'Egg' },
+            { minLevel: 1, icon: '🐣', name: 'Hatching' },
+            { minLevel: 2, icon: '🐥', name: 'Chick' },
+            { minLevel: 5, icon: '🐓', name: 'Rooster' },
+            { minLevel: 10, icon: '🦉', name: 'Owl' },
+            { minLevel: 20, icon: '🦅', name: 'Eagle' },
+            { minLevel: 30, icon: '🐲', name: 'Dragon' },
+            { minLevel: 50, icon: '👑', name: 'Master' }
+        ];
+
+        const XP_PER_LEVEL = 100;
+
+        class GameEngine {
+            constructor() {
+                this.profile = null;
+                this.callbacks = [];
+            }
+
+            async init() {
+                this.profile = await window.dbAPI.getUserProfile();
+                this.checkStreak();
+                this.notifyUpdate();
+            }
+
+            async checkStreak() {
+                if (!this.profile) return;
+                const today = new Date().toDateString();
+
+                if (this.profile.lastActiveDate !== today) {
+                    const lastActive = new Date(this.profile.lastActiveDate);
+                    const yesterday = new Date();
+                    yesterday.setDate(yesterday.getDate() - 1);
+
+                    if (this.profile.lastActiveDate === yesterday.toDateString()) {
+                        // Maintained streak
+                        this.profile.streak += 1;
+                    } else if (this.profile.lastActiveDate !== null) {
+                        // Lost streak
+                        this.profile.streak = 1;
+                    } else {
+                        // First day
+                        this.profile.streak = 1;
+                    }
+                    this.profile.lastActiveDate = today;
+                    await window.dbAPI.saveUserProfile(this.profile);
+                }
+            }
+
+            getAvatar() {
+                let currentStage = AVATAR_STAGES[0];
+                for (let stage of AVATAR_STAGES) {
+                    if (this.profile && this.profile.level >= stage.minLevel) {
+                        currentStage = stage;
+                    } else {
+                        break; // Because array is sorted
+                    }
+                }
+                return currentStage;
+            }
+
+            async addXP(amount) {
+                if (!this.profile) return;
+
+                const previousLevel = this.profile.level;
+                this.profile.xp += amount;
+                this.profile.level = Math.floor(this.profile.xp / XP_PER_LEVEL);
+
+                await window.dbAPI.saveUserProfile(this.profile);
+
+                if (this.profile.level > previousLevel) {
+                    this.triggerLevelUp();
+                }
+
+                this.notifyUpdate();
+            }
+
+            triggerLevelUp() {
+                const avatar = this.getAvatar();
+                // Play sound or show simple alert for now
+                alert(`🎉 Level Up! You are now Level ${this.profile.level}. Avatar: ${avatar.icon} ${avatar.name}`);
+            }
+
+            onUpdate(callback) {
+                this.callbacks.push(callback);
+            }
+
+            notifyUpdate() {
+                if (!this.profile) return;
+                const avatar = this.getAvatar();
+                const nextLevelXP = (this.profile.level + 1) * XP_PER_LEVEL;
+                const currentLevelProgress = this.profile.xp % XP_PER_LEVEL;
+                const progressPercent = (currentLevelProgress / XP_PER_LEVEL) * 100;
+
+                const stateObj = {
+                    xp: this.profile.xp,
+                    level: this.profile.level,
+                    streak: this.profile.streak,
+                    avatarIcon: avatar.icon,
+                    avatarName: avatar.name,
+                    progressPercent: progressPercent,
+                    nextLevelXP: nextLevelXP
+                };
+
+                this.callbacks.forEach(cb => cb(stateObj));
+            }
+        }
+
+        // Expose globally
+        window.GameEngine = new GameEngine();
+        document.addEventListener('DOMContentLoaded', () => {
+            window.GameEngine.init();
+        });
+
+    </script>
+    <script>
+        /* --- Inlined: js/boss.js --- */
+        /**
+         * LingoBooks - Boss Fight Module
+         * Generates a Boss Fight from the top 5 most errored words in the dictionary.
+         * Includes Health mechanics, Tailwind Modal rendering, and XP rewards.
+         */
+
+        class BossFight {
+            constructor() {
+                this.bossMaxHP = 100;
+                this.bossCurrentHP = 100;
+                this.playerMaxHearts = 3;
+                this.playerCurrentHearts = 3;
+
+                this.words = [];
+                this.currentWordIndex = 0;
+
+                this.isDefeated = false;
+            }
+
+            async initFight() {
+                // Fetch Top 5 words with most errors
+                const allWords = await window.dbAPI.getAllWords();
+                if (!allWords || allWords.length < 5) {
+                    alert("Önce kitap okuyup en az 5 kelimenin anlamına bakmalısın!");
+                    return false; // Not enough words
+                }
+
+                // Sort descending by errorCount, fallback to timestamp if no errors
+                const sortedWords = allWords.sort((a, b) => {
+                    const errA = a.errorCount || 0;
+                    const errB = b.errorCount || 0;
+                    if (errA === errB) return b.timestamp - a.timestamp;
+                    return errB - errA;
+                });
+
+                this.words = sortedWords.slice(0, 5);
+                this.bossCurrentHP = 100;
+                this.playerCurrentHearts = 3;
+                this.currentWordIndex = 0;
+                this.isDefeated = false;
+
+                this.renderModal();
+                this.nextQuestion();
+                return true;
+            }
+
+            renderModal() {
+                // Remove existing if any
+                let modal = document.getElementById('boss-modal');
+                if (modal) modal.remove();
+
+                modal = document.createElement('div');
+                modal.id = 'boss-modal';
+                modal.className = 'fixed inset-0 z-[9999] p-4 flex items-center justify-center bg-gray-900 bg-opacity-90';
+
+                modal.innerHTML = `
+            <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-6 w-full max-w-lg flex flex-col items-center">
+                <!-- Header / Titles -->
+                <div class="text-center mb-6 w-full">
+                    <h2 class="text-3xl font-black text-red-600 tracking-tighter uppercase mb-1 drop-shadow-sm">Bölüm Sonu Canavarı</h2>
+                    <p class="text-gray-500 dark:text-gray-300 text-sm font-medium">Zorlandığın kelimeleri yen!</p>
+                </div>
+
+                <!-- Battle Arena Status -->
+                <div class="w-full flex justify-between items-center mb-8 px-2">
+                    <!-- Player Hearts -->
+                    <div class="flex flex-col items-start gap-1">
+                        <span class="text-xs font-bold text-gray-500 uppercase tracking-widest">Sen</span>
+                        <div id="boss-player-hearts" class="flex gap-1 text-2xl drop-shadow-md">
+                            ❤️❤️❤️
+                        </div>
+                    </div>
+
+                    <!-- VS -->
+                    <div class="text-xl font-black text-gray-300 italic px-2">VS</div>
+
+                    <!-- Boss Health -->
+                    <div class="flex flex-col items-end gap-1 w-1/2">
+                        <span class="text-xs font-bold text-gray-500 uppercase tracking-widest">Canavar (👿)</span>
+                        <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden border border-gray-300 shadow-inner">
+                            <div id="boss-hp-bar" class="bg-red-500 h-full transition-all duration-300 ease-out" style="width: 100%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Question Area -->
+                <div id="boss-question-area" class="w-full text-center flex flex-col gap-6 w-full">
+                    <div class="bg-blue-50 dark:bg-blue-900/30 p-6 rounded-2xl border-2 border-blue-100 dark:border-blue-800">
+                        <span class="text-xs font-bold text-blue-500 dark:text-blue-400 uppercase tracking-widest mb-2 block">Hedef Kelime</span>
+                        <h3 id="boss-target-word" class="text-4xl font-black text-gray-800 dark:text-white capitalize">Loading...</h3>
+                    </div>
+                    
+                    <div id="boss-options" class="flex flex-col gap-3 w-full">
+                        <!-- Buttons injected here -->
+                    </div>
+                </div>
+
+                <!-- Result Message -->
+                 <div id="boss-result-message" class="hidden w-full text-center mt-6">
+                    <h3 id="boss-result-title" class="text-3xl font-black mb-2 uppercase"></h3>
+                    <p id="boss-result-subtitle" class="text-gray-600 dark:text-gray-300 mb-6 font-medium"></p>
+                    <button id="boss-btn-close" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition-transform active:scale-95 text-xl">
+                        Savaştan Çık
+                    </button>
+                 </div>
+            </div>
+        `;
+
+                document.body.appendChild(modal);
+
+                document.getElementById('boss-btn-close').addEventListener('click', () => {
+                    modal.remove();
+                });
+            }
+
+            updateUI() {
+                const heartsContainer = document.getElementById('boss-player-hearts');
+                if (heartsContainer) {
+                    let heartsHtml = '';
+                    for (let i = 0; i < this.playerMaxHearts; i++) {
+                        heartsHtml += i < this.playerCurrentHearts ? '❤️' : '🤍';
+                    }
+                    heartsContainer.innerHTML = heartsHtml;
+                }
+
+                const hpBar = document.getElementById('boss-hp-bar');
+                if (hpBar) {
+                    const pct = Math.max(0, (this.bossCurrentHP / this.bossMaxHP) * 100);
+                    hpBar.style.width = pct + '%';
+                }
+            }
+
+            async nextQuestion() {
+                if (this.playerCurrentHearts <= 0) {
+                    this.endFight(false);
+                    return;
+                }
+
+                if (this.bossCurrentHP <= 0 || this.currentWordIndex >= this.words.length) {
+                    // If we went through all 5 without dying, boss is defeated. Boss HP logic: -20 per hit. 5 hits = 100.
+                    if (this.bossCurrentHP > 0) {
+                        this.bossCurrentHP = 0;
+                        this.updateUI();
+                    }
+                    this.endFight(true);
+                    return;
+                }
+
+                const currentWordObj = this.words[this.currentWordIndex];
+                document.getElementById('boss-target-word').textContent = currentWordObj.word;
+
+                // Generate options (1 correct, 3 random wrong from DB)
+                const allWords = await window.dbAPI.getAllWords();
+                let options = [currentWordObj.definition ? currentWordObj.definition.translation : 'Bilinmeyen Çeviri (Veri hatası)'];
+
+                while (options.length < 4 && options.length < allWords.length) {
+                    const randomWord = allWords[Math.floor(Math.random() * allWords.length)];
+                    const rndTra = randomWord.definition ? randomWord.definition.translation : null;
+                    if (rndTra && options.indexOf(rndTra) === -1) {
+                        options.push(rndTra);
+                    }
+                }
+
+                // Shuffle options
+                options = options.sort(() => .5 - Math.random());
+
+                const optionsContainer = document.getElementById('boss-options');
+                optionsContainer.innerHTML = '';
+
+                options.forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.className = 'w-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-100 font-bold py-4 px-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-600 text-lg transition-all active:scale-[0.98]';
+                    btn.textContent = opt;
+                    btn.onclick = () => this.handleAnswer(opt, currentWordObj);
+                    optionsContainer.appendChild(btn);
+                });
+            }
+
+            async handleAnswer(selectedOption, wordObj) {
+                const isCorrect = selectedOption === (wordObj.definition ? wordObj.definition.translation : '');
+
+                // Update DB word stats
+                await window.dbAPI.updateWordCount(wordObj.id, isCorrect);
+
+                const optionsContainer = document.getElementById('boss-options');
+                Array.from(optionsContainer.children).forEach(btn => {
+                    btn.disabled = true;
+                    if (btn.textContent === (wordObj.definition ? wordObj.definition.translation : '')) {
+                        btn.classList.add('!bg-green-500', '!text-white', '!border-green-600');
+                    } else if (btn.textContent === selectedOption && !isCorrect) {
+                        btn.classList.add('!bg-red-500', '!text-white', '!border-red-600');
+                    }
+                });
+
+                if (isCorrect) {
+                    this.bossCurrentHP -= 20; // 5 kelime, 20 damage each
+                } else {
+                    this.playerCurrentHearts -= 1;
+                }
+
+                this.updateUI();
+                this.currentWordIndex++;
+
+                setTimeout(() => {
+                    this.nextQuestion();
+                }, 1500);
+            }
+
+            async endFight(won) {
+                document.getElementById('boss-question-area').classList.add('hidden');
+                const resDiv = document.getElementById('boss-result-message');
+                resDiv.classList.remove('hidden');
+
+                const title = document.getElementById('boss-result-title');
+                const sub = document.getElementById('boss-result-subtitle');
+
+                if (won) {
+                    this.isDefeated = true;
+                    title.textContent = "🏆 Zafer!";
+                    title.classList.add('text-green-600');
+                    sub.textContent = "+100 XP Kazandın! Canavarı dize getirdin.";
+                    if (window.GameEngine) {
+                        await window.GameEngine.addXP(100);
+                    }
+                } else {
+                    title.textContent = "💀 Yenilgi...";
+                    title.classList.add('text-red-600');
+                    sub.textContent = "Kelimelere biraz daha çalışıp tekrar gel!";
+                }
+            }
+        }
+
+        // Global exposure
+        window.BossFight = new BossFight();
+
+    </script>
+    <script>
+        /* --- Inlined: js/dictionary.js --- */
+        /**
+         * Google Translate API Wrapper
+         * Translates directly to Turkish using a free Google Translate endpoint.
+         */
+
+        async function fetchTranslation(word) {
+            if (!word) return null;
+            try {
+                const map = window.globals.getActiveLanguageMap();
+                const sourceLang = "auto";
+                const targetLang = "tr";
+
+                // Free Google Translate GoogleAPI endpoint
+                const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLang}&tl=${targetLang}&dt=t&q=${encodeURIComponent(word)}`;
+
+                const res = await fetch(url);
+                const data = await res.json();
+
+                // data[0][0][0] contains the translated text
+                if (data && data[0] && data[0][0] && data[0][0][0]) {
+                    return {
+                        word: word,
+                        translation: data[0][0][0],
+                        phonetic: `[${(map && map.label ? map.label.substring(0, 2) : sourceLang).toUpperCase()}]`,
+                        source_lang: sourceLang
+                    };
+                }
+
+                return { error: "Translation not found." };
+
+            } catch (err) {
+                console.error("Google Translate API error:", err);
+                alert("Çeviri Sunucusu Meşgul");
+                return { error: "Network error occurred." };
+            }
+        }
+
+        window.dictionaryAPI = { fetchDefinition: fetchTranslation };
+
+    </script>
+    <script>
+        /* --- Inlined: js/speech.js --- */
+        /**
+         * Speech Synthesis Wrapper V4
+         * Supports dynamic language locales based on global mapping.
+         */
+
+        class SpeechService {
+            constructor() {
+                this.synth = window.speechSynthesis;
+                this.utterance = new SpeechSynthesisUtterance();
+            }
+
+            speak(text, rate = 1.0) {
+                if (this.synth.speaking) {
+                    this.synth.cancel();
+                }
+
+                if (text !== '') {
+                    this.utterance.text = text;
+                    this.utterance.rate = rate;
+
+                    // V4 Multi-Language Mapping
+                    if (window.globals && window.globals.getActiveLanguageMap) {
+                        this.utterance.lang = window.globals.getActiveLanguageMap().speech;
+                    } else {
+                        this.utterance.lang = 'en-US'; // Fallback
+                    }
+
+                    this.synth.speak(this.utterance);
+                }
+            }
+
+            stop() {
+                if (this.synth.speaking) {
+                    this.synth.cancel();
+                }
+            }
+        }
+
+        // Global instance
+        window.speechAPI = new SpeechService();
+
+    </script>
+    <script>
+        /* --- Inlined: js/reader.js --- */
+        /**
+         * Reader Component Logic V4 (Anti-Limited Preview Fix)
+         */
+
+        let currentBookMeta = null;
+        let currentWordData = null;
+
+        let epubBook = null;
+        let epubRendition = null;
+        let pdfDoc = null;
+        let pdfPageNum = 1;
+        let pdfCanvas = null;
+        let pdfCtx = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                setupControls();
+                setupAudioPlayer();
+
+                const dictPlayBtn = document.getElementById('dict-play');
+                if (dictPlayBtn) {
+                    dictPlayBtn.addEventListener('click', () => {
+                        if (currentWordData && currentWordData.word && window.speechAPI) {
+                            window.speechAPI.speak(currentWordData.word, 0.9);
+                        }
+                    });
+                }
+
+                const bookId = localStorage.getItem('activeBookId');
+                if (!bookId) {
+                    alert("Lütfen kütüphaneden bir kitap seçin.");
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                const db = await window.dbAPI.initDB();
+                const bookData = await db.get('books', bookId);
+
+                if (bookData) {
+                    currentBookMeta = bookData.meta;
+                    document.getElementById('book-title').textContent = currentBookMeta.title;
+
+                    if (currentBookMeta.audio_url) {
+                        initAudioPlayer(currentBookMeta.audio_url);
+                    }
+
+                    if (bookData.data) {
+                        document.getElementById('local-viewer-layer').classList.remove('hidden');
+                        document.getElementById('book-progress').classList.remove('hidden');
+                        if (currentBookMeta.type === 'pdf') initPDFReader(bookData.data);
+                        else initEpubReader(bookData.data);
+
+                    } else if (currentBookMeta.format_url || currentBookMeta.ia_id) {
+                        initNativeReader(currentBookMeta);
+                    } else if (currentBookMeta.audio_url) {
+                        document.getElementById('error-viewer').classList.remove('hidden');
+                        document.getElementById('error-title').textContent = "🎧 Sadece Sesli Kitap";
+                        document.getElementById('error-desc').textContent = "Dinlemek için aşağıdaki oynatıcıyı kullanın.";
+                    } else {
+                        showFinalError();
+                    }
+                } else {
+                    alert("Kitap verisi bulunamadı.");
+                    window.location.href = 'index.html';
+                }
+            } catch (err) {
+                console.error("CRITICAL READER BOOT ERROR:", err);
+                const fallbackBar = document.getElementById('embed-fallback-bar');
+                if (fallbackBar) {
+                    fallbackBar.classList.remove('hidden');
+                    fallbackBar.style.background = 'var(--error)';
+                    const text = document.getElementById('fallback-text');
+                    if (text) text.textContent = "Kitap yüklenirken kritik bir hata oluştu: " + err.message;
+                }
+            }
+        });
+
+        function showFinalError() {
+            document.getElementById('error-viewer').classList.remove('hidden');
+            document.getElementById('error-title').textContent = "📖 Kitap Önizlemeye Kapalı";
+            document.getElementById('error-desc').textContent = "Bu kitap telif hakları nedeniyle kapalı, lütfen listenizdeki diğer (Açık kaynaklı) kitapları deneyin.";
+        }
+
+        // =====================================
+        // NATIVE READER & SONIC TTS (V8 True EPUB)
+        // =====================================
+        function showCriticalError(msg) {
+            const panel = document.getElementById('critical-error-panel');
+            const text = document.getElementById('critical-error-message');
+            if (panel && text) {
+                panel.classList.remove('hidden');
+                text.textContent = msg;
+            }
+        }
+
+        let ttsUtterance = null;
+        let ttsSpans = [];
+        let currentSpanIndex = 0;
+        let isPlaying = false;
+
+        async function initNativeReader(meta) {
+            const fallbackBar = document.getElementById('embed-fallback-bar');
+            const textLayer = document.getElementById('text-viewer-layer');
+            const textTarget = document.getElementById('text-render-target');
+            const fallbackText = document.getElementById('fallback-text');
+            const ttsController = document.getElementById('tts-controller');
+
+            document.getElementById('local-viewer-layer').classList.add('hidden');
+            document.getElementById('book-progress').classList.add('hidden');
+
+            const bookId = meta.id || meta.ia_id;
+
+            // V9 Legacy Metadata Patch: Reconstruct EPUB URL if missing from Old Caches
+            if (meta.isGutenberg && !meta.epub_url && meta.ia_id) {
+                meta.epub_url = `https://www.gutenberg.org/ebooks/${meta.ia_id}.epub.images`;
+            }
+
+            // V8 True EPUB Logic
+            if (meta.epub_url) {
+                fallbackBar.classList.remove('hidden');
+                if (fallbackText) fallbackText.textContent = "Okuyucu Yükleniyor (EPUB)...";
+                fallbackBar.style.background = 'var(--accent-primary)';
+                fallbackBar.style.color = '#fff';
+                if (textLayer) textLayer.classList.add('hidden');
+
+                try {
+                    // Check cache for arrayBuffer
+                    const cachedEpub = await window.dbAPI.getBookContent(bookId + "_epub");
+                    let arrayBuffer;
+                    if (cachedEpub) {
+                        arrayBuffer = cachedEpub;
+                    } else {
+                        // Sadece Pure allorigins proxy
+                        let res = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(meta.epub_url));
+
+                        if (!res.ok) throw new Error("EPUB Bağlantı Reddedildi");
+
+                        arrayBuffer = await res.arrayBuffer();
+                        await window.dbAPI.saveBookContent(bookId + "_epub", arrayBuffer);
+                    }
+                    fallbackBar.classList.add('hidden');
+                    try {
+                        initEpubReader(arrayBuffer);
+                    } catch (epubErr) {
+                        showCriticalError("EPUB Render Motoru Çöktü: " + epubErr.message);
+                    }
+                    return; // STRICT RETURN: We NEVER fall back to text if EPUB is available.
+                } catch (e) {
+                    console.error("CRITICAL: EPUB Download completely failed.", e);
+                    alert("Bağlantı Hatası: Proxy Reddedildi");
+                    showCriticalError("Bağlantı Hatası: Proxy Reddedildi\n" + e.message);
+                }
+            }
+
+            // 1. Check Local DB (Single-Fetch constraint)
+            const cachedText = await window.dbAPI.getBookContent(bookId);
+            if (cachedText) {
+                renderNativeText(cachedText, textLayer, textTarget, ttsController);
+                return;
+            }
+
+            // 2. Client-Side Fetch
+            fallbackBar.classList.remove('hidden');
+            if (fallbackText) fallbackText.textContent = "Kitap indiriliyor...";
+            fallbackBar.style.background = 'var(--accent-primary)';
+            fallbackBar.style.color = '#fff';
+            if (textLayer) textLayer.classList.add('hidden');
+
+            try {
+                let textResult = null;
+                let res;
+
+                // V8: Attempt 1 - Format URL from Gutendex via LingoBooks Proxy
+                if (meta.format_url) {
+                    const proxyUrl = '/api/proxy?url=' + encodeURIComponent(meta.format_url);
+                    res = await fetch(proxyUrl);
+                    if (res.ok) {
+                        textResult = await res.text();
+                        // Strip HTML if it's an HTML format
+                        if (meta.format_url.includes('html')) {
+                            const temp = document.createElement('div');
+                            temp.innerHTML = textResult;
+                            textResult = temp.textContent || temp.innerText || "";
+                        }
+                    }
+                }
+
+                // V8: Attempt 2 - Direct Gutenberg HTML Fallback via LingoBooks Proxy
+                if (!textResult && meta.ia_id) {
+                    if (fallbackText) fallbackText.textContent = "Doğrudan Gutenberg bağlantısı deneniyor...";
+                    const directHtmlUrl = `https://www.gutenberg.org/files/${meta.ia_id}/${meta.ia_id}-h/${meta.ia_id}-h.htm`;
+                    const proxyHtmlUrl = '/api/proxy?url=' + encodeURIComponent(directHtmlUrl);
+
+                    res = await fetch(proxyHtmlUrl);
+                    if (res.ok) {
+                        textResult = await res.text();
+                        const temp = document.createElement('div');
+                        temp.innerHTML = textResult;
+                        textResult = temp.textContent || temp.innerText || "";
+                    }
+                }
+
+                // Attempt 3: Fallback Archive.org _djvu.txt & .txt
+                if (!textResult && meta.ia_id) {
+                    if (fallbackText) fallbackText.textContent = "Alternatif Arşiv metni aranıyor...";
+                    res = await fetch(`https://archive.org/cors/${meta.ia_id}/${meta.ia_id}_djvu.txt`);
+                    if (res.ok) textResult = await res.text();
+
+                    if (!textResult || textResult.trim().length === 0) {
+                        res = await fetch(`https://archive.org/cors/${meta.ia_id}/${meta.ia_id}.txt`);
+                        if (res.ok) textResult = await res.text();
+                    }
+                }
+
+                if (textResult && textResult.trim().length > 50) {
+                    await window.dbAPI.saveBookContent(bookId, textResult);
+                    fallbackBar.classList.add('hidden');
+                    renderNativeText(textResult, textLayer, textTarget, ttsController);
+                } else {
+                    throw new Error("Text not found or empty");
+                }
+            } catch (e) {
+                console.warn("Direct fetch failed", e);
+                if (fallbackText) fallbackText.textContent = "Metin okunamadı, eski sürüm Embed deneniyor...";
+                fallbackBar.style.background = 'var(--warning)';
+                fallbackBar.style.color = '#000';
+                if (meta.ia_id) {
+                    const iframe = document.getElementById('embed-viewer');
+                    if (iframe) iframe.classList.remove('hidden');
+                    loadPlanC(meta.ia_id, iframe, fallbackBar);
+                } else {
+                    showFinalError();
+                }
+            }
+        }
+
+        function renderNativeText(text, layer, target, ttsController) {
+            if (!layer || !target) return;
+            layer.classList.remove('hidden');
+            if (ttsController) ttsController.classList.remove('hidden');
+
+            // Split text into sentences/chunks for TTS and span wrapping
+            // We match sentences ending with . ! ? followed by space or newline
+            const chunks = text.match(/[^.!?]+[.!?]+(\s|$)/g) || [text];
+
+            target.innerHTML = '';
+            ttsSpans = [];
+            currentSpanIndex = 0;
+
+            chunks.forEach((chunk, index) => {
+                const span = document.createElement('span');
+                span.textContent = chunk;
+                span.className = 'tts-chunk cursor-pointer';
+                span.dataset.index = index;
+
+                // V8 Apple Books Style: Select to Translate
+                span.addEventListener('pointerup', (e) => {
+                    const selection = window.getSelection();
+                    const word = selection.toString().trim();
+                    if (word && word.length > 0) {
+                        handleWordSelection(word, chunk.trim());
+                        e.stopPropagation();
+                    }
+                });
+
+                target.appendChild(span);
+                ttsSpans.push(span);
+            });
+
+            setupSonicTTS(target);
+
+            // V8 Elite Pagination init
+            setTimeout(() => {
+                initPaginationControls();
+                window.dbAPI.getProgress('currentBook').then(prog => {
+                    if (prog && prog.location) {
+                        currentColumnIndex = parseInt(prog.location) || 0;
+                        updatePagination();
+                    }
+                });
+            }, 150);
+        }
+
+        // =====================================
+        // V8 ELITE NATIVE PAGINATION
+        // =====================================
+        let currentColumnIndex = 0;
+        let totalColumns = 1;
+
+        function updatePagination() {
+            const target = document.getElementById('text-render-target');
+            if (!target) return;
+
+            totalColumns = Math.ceil(target.scrollWidth / window.innerWidth);
+            if (currentColumnIndex >= totalColumns) currentColumnIndex = Math.max(0, totalColumns - 1);
+            if (currentColumnIndex < 0) currentColumnIndex = 0;
+
+            target.style.transform = `translateX(-${currentColumnIndex * 100}vw)`;
+            window.dbAPI.saveProgress('currentBook', currentColumnIndex.toString());
+        }
+
+        function initPaginationControls() {
+            const target = document.getElementById('text-render-target');
+            const layer = document.getElementById('text-scroll-area');
+            if (!target || !layer) return;
+
+            totalColumns = Math.ceil(target.scrollWidth / window.innerWidth);
+            currentColumnIndex = 0;
+
+            // Tap Zones & Menu Toggle
+            layer.onclick = (e) => {
+                if (window.getSelection().toString().trim().length > 0) return; // Wait if selecting text
+
+                const x = e.clientX;
+                const width = window.innerWidth;
+
+                if (x < width * 0.25) {
+                    // Left Zone: Prev Page
+                    if (currentColumnIndex > 0) {
+                        currentColumnIndex--;
+                        updatePagination();
+                    }
+                } else if (x > width * 0.75) {
+                    // Right Zone: Next Page
+                    if (currentColumnIndex < totalColumns - 1) {
+                        currentColumnIndex++;
+                        updatePagination();
+                    }
+                } else {
+                    // Center Zone: Toggle Menu
+                    document.querySelectorAll('.floating-ui').forEach(ui => {
+                        ui.classList.toggle('active');
+                    });
+                }
+            };
+
+            // Recalibrate columns on resize
+            window.addEventListener('resize', () => {
+                setTimeout(updatePagination, 50);
+            });
+
+            // Also support smooth horizontal swipes for pages
+            let touchStartX = 0;
+            layer.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
+            layer.addEventListener('touchend', e => {
+                const touchEndX = e.changedTouches[0].screenX;
+                if (touchEndX < touchStartX - 50 && currentColumnIndex < totalColumns - 1) {
+                    currentColumnIndex++; updatePagination();
+                } else if (touchEndX > touchStartX + 50 && currentColumnIndex > 0) {
+                    currentColumnIndex--; updatePagination();
+                }
+            }, { passive: true });
+        }
+
+        function setupSonicTTS(container) {
+            const playBtn = document.getElementById('tts-play');
+            const stopBtn = document.getElementById('tts-stop');
+            const nextBtn = document.getElementById('tts-next');
+            const prevBtn = document.getElementById('tts-prev');
+
+            if (!window.speechSynthesis) {
+                if (playBtn) playBtn.style.display = 'none';
+                return;
+            }
+
+            const resetPlayBtn = () => {
+                isPlaying = false;
+                if (playBtn) {
+                    playBtn.textContent = '▶️';
+                    playBtn.classList.remove('active-play');
+                }
+            };
+
+            const setPlayBtnActive = () => {
+                isPlaying = true;
+                if (playBtn) {
+                    playBtn.textContent = '⏸';
+                    playBtn.classList.add('active-play');
+                }
+            };
+
+            const highlightSpan = (index) => {
+                ttsSpans.forEach(s => s.classList.remove('tts-highlight'));
+                if (ttsSpans[index]) {
+                    ttsSpans[index].classList.add('tts-highlight');
+                    ttsSpans[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            };
+
+            // V8 Media Session API Integration for Shadowing
+            const updateMediaSession = () => {
+                if ('mediaSession' in navigator) {
+                    navigator.mediaSession.metadata = new MediaMetadata({
+                        title: currentBookMeta ? currentBookMeta.title : 'LingoBooks',
+                        artist: 'Sonic Reader (TTS)',
+                        album: 'Shadowing Mode',
+                        artwork: [
+                            { src: 'assets/icon-192.png', sizes: '192x192', type: 'image/png' }
+                        ]
+                    });
+
+                    navigator.mediaSession.setActionHandler('play', () => {
+                        if (window.speechSynthesis.paused) {
+                            window.speechSynthesis.resume();
+                            setPlayBtnActive();
+                        } else if (!isPlaying) {
+                            speakCurrent();
+                        }
+                        updateMediaSession();
+                    });
+
+                    navigator.mediaSession.setActionHandler('pause', () => {
+                        window.speechSynthesis.pause();
+                        resetPlayBtn();
+                        updateMediaSession();
+                    });
+
+                    navigator.mediaSession.setActionHandler('previoustrack', () => {
+                        if (currentSpanIndex > 0) {
+                            currentSpanIndex--;
+                            if (isPlaying) speakCurrent();
+                            else highlightSpan(currentSpanIndex);
+                        }
+                    });
+
+                    navigator.mediaSession.setActionHandler('nexttrack', () => {
+                        if (currentSpanIndex < ttsSpans.length - 1) {
+                            currentSpanIndex++;
+                            if (isPlaying) speakCurrent();
+                            else highlightSpan(currentSpanIndex);
+                        }
+                    });
+
+                    navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
+                }
+            };
+
+            const speakCurrent = () => {
+                window.speechSynthesis.cancel();
+                if (currentSpanIndex >= ttsSpans.length) {
+                    resetPlayBtn();
+                    return;
+                }
+
+                const text = ttsSpans[currentSpanIndex].textContent;
+                ttsUtterance = new SpeechSynthesisUtterance(text);
+
+                if (currentBookMeta && currentBookMeta.langMap && currentBookMeta.langMap.speech) {
+                    ttsUtterance.lang = currentBookMeta.langMap.speech;
+                } else {
+                    ttsUtterance.lang = window.globals.getActiveLanguageMap().speech;
+                }
+
+                ttsUtterance.onstart = () => {
+                    highlightSpan(currentSpanIndex);
+                };
+
+                ttsUtterance.onend = () => {
+                    if (isPlaying) {
+                        currentSpanIndex++;
+                        speakCurrent();
+                    }
+                };
+
+                ttsUtterance.onerror = (e) => {
+                    console.warn("TTS Error", e);
+                    resetPlayBtn();
+                };
+
+                window.speechSynthesis.speak(ttsUtterance);
+                setPlayBtnActive();
+            };
+
+            if (playBtn) {
+                // Remove old listeners by cloning
+                const newPlayBtn = playBtn.cloneNode(true);
+                playBtn.parentNode.replaceChild(newPlayBtn, playBtn);
+                newPlayBtn.addEventListener('click', () => {
+                    if (isPlaying) {
+                        window.speechSynthesis.pause();
+                        resetPlayBtn();
+                    } else {
+                        if (window.speechSynthesis.paused) {
+                            window.speechSynthesis.resume();
+                            setPlayBtnActive();
+                        } else {
+                            speakCurrent();
+                        }
+                    }
+                });
+            }
+
+            if (stopBtn) {
+                const newStopBtn = stopBtn.cloneNode(true);
+                stopBtn.parentNode.replaceChild(newStopBtn, stopBtn);
+                newStopBtn.addEventListener('click', () => {
+                    window.speechSynthesis.cancel();
+                    resetPlayBtn();
+                    ttsSpans.forEach(s => s.classList.remove('tts-highlight'));
+                });
+            }
+
+            if (nextBtn) {
+                const newNextBtn = nextBtn.cloneNode(true);
+                nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
+                newNextBtn.addEventListener('click', () => {
+                    if (currentSpanIndex < ttsSpans.length - 1) {
+                        currentSpanIndex++;
+                        if (isPlaying) speakCurrent();
+                        else highlightSpan(currentSpanIndex);
+                    }
+                });
+            }
+
+            if (prevBtn) {
+                const newPrevBtn = prevBtn.cloneNode(true);
+                prevBtn.parentNode.replaceChild(newPrevBtn, prevBtn);
+                newPrevBtn.addEventListener('click', () => {
+                    if (currentSpanIndex > 0) {
+                        currentSpanIndex--;
+                        if (isPlaying) speakCurrent();
+                        else highlightSpan(currentSpanIndex);
+                    }
+                });
+            }
+
+            // V7.8 Action Bar Integrations
+            const startListenBtn = document.getElementById('btn-start-listening');
+            const clearTextBtn = document.getElementById('btn-clear-text');
+
+            if (startListenBtn) {
+                const newStartBtn = startListenBtn.cloneNode(true);
+                startListenBtn.parentNode.replaceChild(newStartBtn, startListenBtn);
+                newStartBtn.addEventListener('click', () => {
+                    if (window.speechSynthesis.paused) {
+                        window.speechSynthesis.resume();
+                        setPlayBtnActive();
+                    } else if (!isPlaying) {
+                        if (currentSpanIndex >= ttsSpans.length) currentSpanIndex = 0;
+                        speakCurrent();
+                    }
+                });
+            }
+
+            if (clearTextBtn) {
+                const newClearBtn = clearTextBtn.cloneNode(true);
+                clearTextBtn.parentNode.replaceChild(newClearBtn, clearTextBtn);
+                newClearBtn.addEventListener('click', () => {
+                    document.getElementById('text-render-target').innerHTML = '';
+                    document.getElementById('text-viewer-layer').classList.add('hidden');
+                    window.speechSynthesis.cancel();
+                    resetPlayBtn();
+                    ttsSpans = [];
+                });
+            }
+        }
+
+        function loadPlanC(ia_id, iframe, fallbackBar) {
+            iframe.classList.remove('hidden');
+            fallbackBar.classList.remove('hidden');
+
+            fallbackBar.style.background = 'var(--primary)';
+            fallbackBar.innerHTML = `
+        Alternatif sunucudasınız.
+        <button id="btn-final-cancel" class="btn text-btn" style="padding:4px 8px; font-size:0.8rem; margin-left:10px; color:#fff;">
+            Hala çalışmıyor mu? İptal (Plan D)
+        </button>
+    `;
+
+            iframe.src = `https://openlibrary.org/embed/${ia_id}`;
+
+            document.getElementById('btn-final-cancel').addEventListener('click', () => {
+                iframe.classList.add('hidden');
+                fallbackBar.classList.add('hidden');
+                showFinalError();
+            });
+        }
+
+        // =====================================
+        // AUDIO PLAYER LOGIC
+        // =====================================
+        function initAudioPlayer(url) {
+            const deck = document.getElementById('audio-player-deck');
+            const audioEl = document.getElementById('combo-audio');
+            if (deck && audioEl) {
+                deck.classList.remove('hidden');
+                audioEl.src = url;
+            }
+        }
+
+        function setupAudioPlayer() {
+            const audioEl = document.getElementById('combo-audio');
+            const speedBtns = document.querySelectorAll('.speed-btn');
+            if (!audioEl || speedBtns.length === 0) return;
+
+            speedBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    speedBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    audioEl.playbackRate = parseFloat(btn.getAttribute('data-speed'));
+                });
+            });
+        }
+
+        // =====================================
+        // STANDARD CONTROLS (Common)
+        // =====================================
+        function setupControls() {
+            const btnBack = document.getElementById('btn-back');
+            if (btnBack) btnBack.addEventListener('click', () => window.location.href = 'index.html');
+
+            const btnNext = document.getElementById('next-page');
+            if (btnNext) btnNext.addEventListener('click', () => {
+                if (currentBookMeta?.type === 'pdf') pdfNextPage();
+                else if (epubRendition) epubRendition.next();
+            });
+
+            const btnPrev = document.getElementById('prev-page');
+            if (btnPrev) btnPrev.addEventListener('click', () => {
+                if (currentBookMeta?.type === 'pdf') pdfPrevPage();
+                else if (epubRendition) epubRendition.prev();
+            });
+
+            const dictSave = document.getElementById('drawer-dict-save');
+            if (dictSave) dictSave.addEventListener('click', async (e) => {
+                if (currentWordData) {
+                    await window.dbAPI.saveWord(
+                        currentWordData.word, currentWordData.context, currentWordData.definitionData
+                    );
+                    e.target.textContent = 'Kaydedildi!';
+                    e.target.style.background = 'var(--success)';
+                    setTimeout(() => {
+                        e.target.textContent = 'Kelime Kartını Kaydet';
+                        e.target.style.background = '';
+                    }, 1000);
+                }
+            });
+
+            const drawerClose = document.getElementById('drawer-close');
+            if (drawerClose) drawerClose.addEventListener('click', closeSideDrawer);
+
+            const drawerOverlay = document.getElementById('drawer-overlay');
+            if (drawerOverlay) drawerOverlay.addEventListener('click', closeSideDrawer);
+
+            // V8 Theme Settings
+            const themeBtns = document.querySelectorAll('.theme-btn');
+            themeBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const theme = e.target.getAttribute('data-theme');
+                    document.body.className = theme === 'light' ? '' : `${theme}-theme`;
+                    themeBtns.forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+
+                    // Apply to EPUB if active
+                    if (epubRendition) {
+                        let color = theme === 'dark' ? '#fff' : '#3d3024';
+                        if (theme === 'light') color = '#000';
+                        epubRendition.themes.default({ body: { "color": `${color} !important` } });
+                    }
+                });
+            });
+
+            // V8 EPUB Slider Navigation
+            const slider = document.getElementById('epub-slider');
+            const progressText = document.getElementById('epub-progress-text');
+
+            if (slider) {
+                slider.addEventListener('change', (e) => {
+                    if (epubBook && epubRendition) {
+                        const percentage = e.target.value / 100;
+                        const cfi = epubBook.locations.cfiFromPercentage(percentage);
+                        if (cfi) {
+                            epubRendition.display(cfi);
+                        }
+                    }
+                });
+
+                slider.addEventListener('input', (e) => {
+                    if (progressText) progressText.textContent = `${e.target.value}%`;
+                });
+
+                window.addEventListener('epub-relocated', (e) => {
+                    if (epubBook && epubBook.locations && epubBook.locations.length() > 0) {
+                        const percentage = epubBook.locations.percentageFromCfi(e.detail.start.cfi);
+                        const val = Math.round(percentage * 100);
+                        slider.value = val;
+                        if (progressText) progressText.textContent = `${val}%`;
+                    }
+
+                    // V10 RPG Integration: Add 1 XP per page turn
+                    if (window.GameEngine) {
+                        window.GameEngine.addXP(1);
+                    }
+                });
+                // V9 Settings Sync UI 
+                const toggleSpreadBtn = document.getElementById('toggle-spread');
+                if (toggleSpreadBtn) {
+                    toggleSpreadBtn.addEventListener('click', (e) => {
+                        if (!epubRendition) return;
+                        const currentSettings = JSON.parse(localStorage.getItem('epub_settings') || '{}');
+                        const isCurrentlyOff = currentSettings.spread === false;
+
+                        if (isCurrentlyOff) {
+                            currentSettings.spread = true;
+                            e.target.textContent = '📖 Çift Sayfa Görünümü: Açık';
+                            epubRendition.spread('auto');
+                        } else {
+                            currentSettings.spread = false;
+                            e.target.textContent = '📖 Çift Sayfa Görünümü: Kapalı';
+                            epubRendition.spread('none');
+                        }
+                        localStorage.setItem('epub_settings', JSON.stringify(currentSettings));
+                    });
+                }
+
+                const zoomSlider = document.getElementById('zoom-slider');
+                const zoomVal = document.getElementById('zoom-text-val');
+                if (zoomSlider && zoomVal) {
+                    zoomSlider.addEventListener('input', (e) => {
+                        zoomVal.textContent = `${e.target.value}%`;
+                    });
+                    zoomSlider.addEventListener('change', (e) => {
+                        if (!epubRendition) return;
+                        const newZoom = `${e.target.value}%`;
+                        epubRendition.themes.fontSize(newZoom);
+
+                        const currentSettings = JSON.parse(localStorage.getItem('epub_settings') || '{}');
+                        currentSettings.zoom = e.target.value;
+                        localStorage.setItem('epub_settings', JSON.stringify(currentSettings));
+                    });
+                }
+            }
+        }
+
+        // =====================================
+        // PLAN A: PDF JS Logic
+        // =====================================
+        function initPDFReader(arrayBuffer) {
+            document.getElementById('pdf-canvas').style.display = 'block';
+            pdfCanvas = document.getElementById('pdf-canvas');
+            pdfCtx = pdfCanvas.getContext('2d');
+
+            const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+            loadingTask.promise.then(function (pdf) {
+                pdfDoc = pdf;
+                window.dbAPI.getProgress('currentBook').then(prog => {
+                    if (prog && prog.location) pdfPageNum = parseInt(prog.location);
+                    renderPDFPage(pdfPageNum);
+                });
+            }, function (reason) { });
+
+            document.addEventListener("dblclick", () => {
+                const selection = window.getSelection();
+                if (!selection) return;
+                const text = selection.toString().trim();
+                if (text && text.length > 0) handleWordSelection(text, "PDF: Tam bağlam okunamadı.");
+            });
+        }
+
+        function renderPDFPage(num) {
+            pdfDoc.getPage(num).then(function (page) {
+                const viewport = page.getViewport({ scale: 1.5 });
+                pdfCanvas.height = viewport.height;
+                pdfCanvas.width = viewport.width;
+
+                const renderContext = { canvasContext: pdfCtx, viewport: viewport };
+                page.render(renderContext);
+
+                window.dbAPI.saveProgress('currentBook', num.toString());
+            });
+        }
+
+        function pdfPrevPage() {
+            if (pdfPageNum <= 1) return;
+            pdfPageNum--;
+            renderPDFPage(pdfPageNum);
+        }
+        function pdfNextPage() {
+            if (pdfPageNum >= pdfDoc.numPages) return;
+            pdfPageNum++;
+            renderPDFPage(pdfPageNum);
+        }
+
+        // =====================================
+        // PLAN A: EPUB JS Logic
+        // =====================================
+        function initEpubReader(arrayBuffer) {
+            document.getElementById('pdf-canvas').style.display = 'none';
+
+            // V8: Unhide EPUB layers
+            document.getElementById('text-viewer-layer').classList.add('hidden');
+            document.getElementById('local-viewer-layer').classList.remove('hidden');
+
+            epubBook = ePub(arrayBuffer);
+
+            // V9 True EPUB Settings defaults
+            let defaultSpread = 'auto'; // Will be mapped to 'none' or 'auto'
+            let defaultZoom = '100%';
+
+            try {
+                const storedSettings = localStorage.getItem('epub_settings');
+                if (storedSettings) {
+                    const parsed = JSON.parse(storedSettings);
+                    if (parsed.spread === false) defaultSpread = 'none';
+                    if (parsed.zoom) defaultZoom = `${parsed.zoom}%`;
+
+                    // Sync UI state
+                    const toggleSpreadBtn = document.getElementById('toggle-spread');
+                    if (toggleSpreadBtn) {
+                        toggleSpreadBtn.textContent = parsed.spread === false ? '📖 Çift Sayfa Görünümü: Kapalı' : '📖 Çift Sayfa Görünümü: Açık';
+                    }
+                    const zoomSlider = document.getElementById('zoom-slider');
+                    const zoomVal = document.getElementById('zoom-text-val');
+                    if (zoomSlider && zoomVal) {
+                        zoomSlider.value = parsed.zoom || 100;
+                        zoomVal.textContent = defaultZoom;
+                    }
+                }
+            } catch (e) {
+                console.warn("Failed to load epub settings from localStorage", e);
+            }
+
+            epubRendition = epubBook.renderTo("epub-render-target", {
+                width: "100%", height: "100%", spread: defaultSpread
+            });
+
+            epubRendition.themes.fontSize(defaultZoom);
+
+            epubBook.ready.then(() => {
+                // Generate locations for slider logic
+                return epubBook.locations.generate(1600);
+            }).then(() => {
+                // Locations generated, slider is now ready to use percentage
+            });
+
+            window.dbAPI.getProgress('currentBook').then(prog => {
+                if (prog && prog.location) epubRendition.display(prog.location);
+                else epubRendition.display();
+            });
+
+            epubRendition.on("relocated", (location) => {
+                window.dbAPI.saveProgress('currentBook', location.start.cfi);
+                // Dispatch event for Slider to update
+                window.dispatchEvent(new CustomEvent('epub-relocated', { detail: location }));
+            });
+
+            // V9 Native EPUB.js Selection Event (Dictionary Integration)
+            epubRendition.on("selected", async (cfiRange, contents) => {
+                epubBook.getRange(cfiRange).then(range => {
+                    const word = range.toString().trim();
+                    if (word) {
+                        let context = "";
+                        if (range.commonAncestorContainer && range.commonAncestorContainer.textContent) {
+                            context = range.commonAncestorContainer.textContent.trim().substring(0, 150) + "...";
+                        }
+                        handleWordSelection(word, context);
+                    }
+                });
+            });
+
+            epubRendition.hooks.content.register((contents, view) => {
+                // V8: Let the book breathe, minimal overrides to keep original book layout
+                contents.addStylesheetRules([
+                    ['body', ['background-color: transparent !important', 'color: var(--text-primary) !important']]
+                ]);
+
+                const doc = contents.document;
+
+                // Tap to toggle menu or turn pages
+                doc.addEventListener('click', (e) => {
+                    if (contents.window.getSelection().toString().trim().length > 0) return;
+                    const x = e.clientX;
+                    const width = contents.window.innerWidth;
+                    if (x < width * 0.2) epubRendition.prev();
+                    else if (x > width * 0.8) epubRendition.next();
+                    else {
+                        document.querySelectorAll('.floating-ui').forEach(ui => ui.classList.toggle('active'));
+                    }
+                });
+
+                // V9 Swipe to turn pages
+                let touchStartX = 0;
+                let touchEndX = 0;
+
+                doc.addEventListener('touchstart', e => {
+                    touchStartX = e.changedTouches[0].screenX;
+                }, false);
+
+                doc.addEventListener('touchend', e => {
+                    touchEndX = e.changedTouches[0].screenX;
+                    handleSwipe();
+                }, false);
+
+                function handleSwipe() {
+                    const swipeThreshold = 50;
+                    if (touchEndX < touchStartX - swipeThreshold) {
+                        epubRendition.next(); // Swipe left -> next
+                    }
+                    if (touchEndX > touchStartX + swipeThreshold) {
+                        epubRendition.prev(); // Swipe right -> prev
+                    }
+                }
+            });
+        }
+
+        // =====================================
+        // DICTIONARY (V8 Side Drawer)
+        // =====================================
+        async function handleWordSelection(word, context) {
+            word = word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
+            if (word.length < 2) return;
+
+            currentWordData = { word, context, definitionData: null };
+            openSideDrawer(word);
+
+            const transData = await window.dictionaryAPI.fetchDefinition(word);
+
+            if (transData && !transData.error) {
+                currentWordData.definitionData = transData;
+                const phoneticEl = document.getElementById('drawer-dict-phonetic');
+                const defEl = document.getElementById('drawer-dict-def');
+
+                phoneticEl.textContent = transData.phonetic || `[${window.globals.activeContentLang.toUpperCase()}]`;
+                defEl.textContent = transData.translation;
+
+            } else {
+                document.getElementById('drawer-dict-def').textContent = "Çeviri bulunamadı.";
+                document.getElementById('drawer-dict-phonetic').textContent = "";
+            }
+        }
+
+        function openSideDrawer(word = null) {
+            const drawer = document.getElementById('side-drawer');
+            const overlay = document.getElementById('drawer-overlay');
+
+            if (word) {
+                document.getElementById('drawer-dict-word').textContent = word;
+                document.getElementById('drawer-dict-def').textContent = "Çevriliyor...";
+                document.getElementById('drawer-dict-phonetic').textContent = "...";
+            }
+
+            drawer.classList.add('open');
+            overlay.classList.add('active');
+        }
+
+        function closeSideDrawer() {
+            document.getElementById('side-drawer').classList.remove('open');
+            document.getElementById('drawer-overlay').classList.remove('active');
+            currentWordData = null;
+            if (window.speechAPI) window.speechAPI.stop();
+        }
+
+    </script>
 </body>
 
 </html>
