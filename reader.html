@@ -1199,7 +1199,8 @@
                     </svg>
                 </button>
                 <div id="epub-render-target"
-                    style="z-index: 100 !important; position: relative; width: 100%; height: 100%;"></div>
+                    style="z-index: 100 !important; position: relative; background: transparent !important;">
+                </div>
                 <canvas id="pdf-canvas" class="hidden"></canvas>
                 <button id="next-page" class="nav-btn next fade" aria-label="Next">
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -2236,7 +2237,7 @@
                         arrayBuffer = cachedEpub;
                     } else {
                         // Sadece Pure allorigins proxy
-                        let res = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(meta.epub_url));
+                        let res = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(meta.epub_url), { redirect: 'follow' });
 
                         if (!res.ok) throw new Error("EPUB Bağlantı Reddedildi");
 
