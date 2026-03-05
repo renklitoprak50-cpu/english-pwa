@@ -2239,7 +2239,7 @@
                         // Sadece Pure allorigins proxy
                         let res = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(meta.epub_url), { redirect: 'follow' });
 
-                        if (!res.ok) throw new Error("EPUB Bağlantı Reddedildi");
+                        if (!res.ok) throw new Error("Proxy Reddedildi");
 
                         arrayBuffer = await res.arrayBuffer();
                         await window.dbAPI.saveBookContent(bookId + "_epub", arrayBuffer);
@@ -2248,13 +2248,15 @@
                     try {
                         initEpubReader(arrayBuffer);
                     } catch (epubErr) {
+                        console.error("EPUB render failed:", epubErr);
                         showCriticalError("EPUB Render Motoru Çöktü: " + epubErr.message);
                     }
                     return; // STRICT RETURN: We NEVER fall back to text if EPUB is available.
                 } catch (e) {
                     console.error("CRITICAL: EPUB Download completely failed.", e);
-                    alert("Bağlantı Hatası: Proxy Reddedildi");
+                    // Hata ekranında kilitlenmeyi önle, alert çıkarıldı, doğrudan panele yaz
                     showCriticalError("Bağlantı Hatası: Proxy Reddedildi\n" + e.message);
+                    return; // Return added to definitively kill fallback logic if proxy fails
                 }
             }
 
