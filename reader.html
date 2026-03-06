@@ -2053,7 +2053,8 @@
                     });
                 }
 
-                const bookId = localStorage.getItem('activeBookId');
+                const urlParams = new URLSearchParams(window.location.search);
+                const bookId = urlParams.get('id') || localStorage.getItem('activeBookId');
                 if (!bookId) {
                     alert("Lütfen kütüphaneden bir kitap seçin.");
                     window.location.href = 'index.html';
@@ -2157,6 +2158,11 @@
                     if (cachedEpub) {
                         arrayBuffer = cachedEpub;
                     } else {
+                        // ULTIMATE FIX: Eğer kitap çevrimdışı mühürlüyse asla internete çıkma
+                        if (bookId && bookId.toString().startsWith('off_')) {
+                            showCriticalError("Çevrimdışı kitap verisi eksik. Lütfen kütüphaneden kitabı silip tekrar çevrimdışı indirin.");
+                            return;
+                        }
                         // Sadece Pure allorigins proxy
                         let res = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(meta.epub_url), { redirect: 'follow' });
 
