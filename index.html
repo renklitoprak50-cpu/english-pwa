@@ -2431,7 +2431,7 @@
                 const reader = new FileReader();
                 reader.onload = async function (e) {
                     const arrayBuffer = e.target.result;
-                    const bookId = `local_${Date.now()}`;
+                    const bookId = `off_${Date.now()}`;
 
                     const isPDF = file.name.toLowerCase().endsWith('.pdf');
                     const metadata = {
@@ -2449,7 +2449,7 @@
 
         function openBook(bookId) {
             localStorage.setItem('activeBookId', bookId);
-            window.location.href = 'reader.html';
+            window.location.href = `reader.html?id=${bookId}`;
         }
 
         // ==========================================
@@ -2707,7 +2707,7 @@
                         else throw new Error("İndirme başarısız");
                     }
 
-                    const bookId = `local_${Date.now()}`;
+                    const bookId = `off_${Date.now()}`;
                     await window.dbAPI.saveBook(bookId, arrayBuffer, activeBookMeta);
 
                     if (arrayBuffer && window.dbAPI.saveBookContent) {

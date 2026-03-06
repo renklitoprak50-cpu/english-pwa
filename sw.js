@@ -14,11 +14,7 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (event) => {
   const url = event.request.url;
-
-  // KRİTİK BYPASS: Dış bağlantılar ve Blob/Data URL'lerine ASLA dokunma
-  // 'redirect: follow' hatasını çözmek için bypass edilen istekleri doğrudan ağa gönder
   if (url.includes('allorigins') || url.startsWith('blob:') || url.includes('google') || url.startsWith('data:')) {
-    event.respondWith(fetch(event.request, { redirect: 'follow' }));
     return;
   }
 
