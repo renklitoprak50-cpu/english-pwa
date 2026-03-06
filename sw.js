@@ -1,6 +1,6 @@
 /* --- sw.js: Sıfır Engel Versiyonu --- */
 const CACHE_NAME = 'polyglot-cache-v16';
-const ASSETS_TO_CACHE = ['/', '/index.html', '/reader.html'];
+const ASSETS_TO_CACHE = ['/', '/index.html', '/reader.html']; // Removed non-existent favicon.ico
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS_TO_CACHE)));
@@ -13,15 +13,13 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  const url = event.request.url;
+
   // KRİTİK BYPASS: Dış bağlantılar ve Blob/Data URL'lerine ASLA dokunma
-  if (event.request.url.includes('allorigins') || event.request.url.startsWith('blob:')) {
+  // 'redirect: follow' hatasını çözmek için bypass edilen istekleri doğrudan ağa gönder
+  if (url.includes('allorigins') || url.startsWith('blob:') || url.includes('google') || url.startsWith('data:')) {
     event.respondWith(fetch(event.request, { redirect: 'follow' }));
     return;
-  }
-
-  if (event.request.url.includes('google') ||
-    event.request.url.startsWith('data:')) {
-    return; // Tarayıcının varsayılan ağ yönetimini kullanmasına izin ver
   }
 
   event.respondWith(
