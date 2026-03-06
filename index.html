@@ -1635,7 +1635,7 @@
          */
 
         const AVATAR_STAGES = [
-            { minLevel: 0, icon: '🥚', name: 'Egg' },
+            { minLevel: 1, icon: '🥚', name: 'Egg' },
             { minLevel: 5, icon: '🐣', name: 'Hatchling' },
             { minLevel: 10, icon: '🐲', name: 'Dragon' },
             { minLevel: 25, icon: '🐉', name: 'Elder Dragon' },
@@ -2327,14 +2327,20 @@
             const db = await window.dbAPI.initDB();
             if (db) {
                 const allBooks = await db.getAll('books');
+                const offlineBooks = allBooks.filter(b => b.id.startsWith('local_') || b.id.startsWith('off_'));
+
                 const shelf = document.getElementById('offline-books-grid');
-                if (shelf && allBooks.length > 0) {
+                if (shelf) {
                     shelf.innerHTML = '';
-                    allBooks.forEach(b => {
-                        const card = createBookCard(b.meta, true);
-                        card.addEventListener('click', () => openBook(b.id));
-                        shelf.appendChild(card);
-                    });
+                    if (offlineBooks.length > 0) {
+                        offlineBooks.forEach(b => {
+                            const card = createBookCard(b.meta, true);
+                            card.addEventListener('click', () => openBook(b.id));
+                            shelf.appendChild(card);
+                        });
+                    } else {
+                        shelf.innerHTML = '<p class="empty-state" style="grid-column: 1 / -1;">Henüz çevrimdışı kitap indirmediniz.</p>';
+                    }
                 }
             }
         }
