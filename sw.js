@@ -15,8 +15,7 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (event) => {
   const url = event.request.url;
   if (url.includes('allorigins') || url.startsWith('blob:') || url.includes('google') || url.startsWith('data:')) {
-    event.respondWith(fetch(event.request, { redirect: 'follow' }));
-    return;
+    return; // Native Bypass: Tarayıcı serbest bırakılır, CORS patlamaz.
   }
 
   event.respondWith(
