@@ -2009,11 +2009,12 @@
                     const bookId = `gtn_${book.id}`;
                     if (blacklist.includes(bookId)) continue;
 
+                    const epubUrl = book.formats['application/epub+zip'];
                     const htmlUrl = book.formats['text/html'] || book.formats['text/html; charset=utf-8'];
                     const txtUrl = book.formats['text/plain'] || book.formats['text/plain; charset=utf-8'] || book.formats['text/plain; charset=us-ascii'];
                     const formatUrl = txtUrl || htmlUrl;
 
-                    if (formatUrl) {
+                    if (epubUrl || formatUrl) {
                         validBooks.push({
                             id: bookId,
                             ia_id: book.id, // For backwards compatibility
@@ -2024,6 +2025,7 @@
                             pages: 0,
                             language_level: heuristcLevelByPages(0, book.title),
                             format_url: formatUrl,
+                            epub_url: epubUrl,
                             isGutenberg: true, // Tag for UI
                             langMap: langMap
                         });
@@ -2690,19 +2692,43 @@
 
                 try {
                     let arrayBuffer = null;
+                    let textContent = null;
                     const downloadUrl = activeBookMeta.epub_url || activeBookMeta.format_url;
+                    const isEpub = !!activeBookMeta.epub_url;
 
                     if (downloadUrl) {
-                        const res = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(downloadUrl), { redirect: 'follow' });
-                        if (res.ok) arrayBuffer = await res.arrayBuffer();
-                        else throw new Error("İndirme başarısız");
+                        let res;
+                        try {
+                            res = await fetch('https://corsproxy.io/?' + encodeURIComponent(downloadUrl));
+                            if (!res.ok) throw new Error("Fallback");
+                        } catch (e) {
+                            res = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(downloadUrl), { redirect: 'follow' });
+                        }
+
+                        if (!res.ok) throw new Error("İndirme başarısız");
+
+                        if (isEpub) {
+                            arrayBuffer = await res.arrayBuffer();
+                        } else {
+                            textContent = await res.text();
+                            if (downloadUrl.includes('html') || downloadUrl.includes('htm')) {
+                                const temp = document.createElement('div');
+                                temp.innerHTML = textContent;
+                                textContent = temp.textContent || temp.innerText || "";
+                            }
+                        }
                     }
 
                     const bookId = `off_${Date.now()}`;
                     await window.dbAPI.saveBook(bookId, arrayBuffer, activeBookMeta);
 
+                    // If we downloaded text, index.html saves it to bookContent using the original meta ID so reader.js can find it
+                    if (textContent && window.dbAPI.saveBookContent) {
+                        await window.dbAPI.saveBookContent(activeBookMeta.id || activeBookMeta.ia_id, textContent);
+                    }
                     if (arrayBuffer && window.dbAPI.saveBookContent) {
-                        await window.dbAPI.saveBookContent(bookId + "_epub", arrayBuffer);
+                        // Maintain cache consistency for Native EPUB load if ever requested
+                        await window.dbAPI.saveBookContent((activeBookMeta.id || activeBookMeta.ia_id) + "_epub", arrayBuffer);
                     }
 
                     btnReadNow.innerHTML = '✅ Mühürlendi!';
