@@ -289,7 +289,12 @@ function updatePagination() {
     if (!target) return;
 
     totalColumns = Math.ceil(target.scrollWidth / window.innerWidth);
-    if (currentColumnIndex >= totalColumns) currentColumnIndex = Math.max(0, totalColumns - 1);
+    if (currentColumnIndex >= totalColumns - 1) {
+        currentColumnIndex = Math.max(0, totalColumns - 1);
+        if (window.BossFight && (!window.BossFight.isDefeated)) {
+            window.BossFight.initFight();
+        }
+    }
     if (currentColumnIndex < 0) currentColumnIndex = 0;
 
     target.style.transform = `translateX(-${currentColumnIndex * 100}vw)`;
@@ -550,6 +555,88 @@ function setupSonicTTS(container) {
             ttsSpans = [];
         });
     }
+
+    const micBtn = document.getElementById('tts-mic');
+    if (micBtn) {
+        const newMicBtn = micBtn.cloneNode(true);
+        micBtn.parentNode.replaceChild(newMicBtn, micBtn);
+
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+
+            newMicBtn.addEventListener('click', () => {
+                if (!ttsSpans[currentSpanIndex]) return;
+
+                const targetText = ttsSpans[currentSpanIndex].textContent.trim();
+                if (!targetText) return;
+
+                if (window.speechSynthesis.speaking) {
+                    window.speechSynthesis.cancel();
+                    resetPlayBtn();
+                }
+
+                if (currentBookMeta && currentBookMeta.langMap && currentBookMeta.langMap.speech) {
+                    recognition.lang = currentBookMeta.langMap.speech;
+                } else {
+                    recognition.lang = window.globals.getActiveLanguageMap().speech;
+                }
+
+                newMicBtn.style.color = 'var(--error)';
+                newMicBtn.textContent = '🔴';
+
+                recognition.start();
+
+                recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript.toLowerCase();
+                    const targetLower = targetText.toLowerCase().replace(/[.,!?;:]/g, '');
+
+                    const words1 = transcript.split(' ');
+                    const words2 = targetLower.split(' ');
+                    let matches = 0;
+                    words1.forEach(w => { if (words2.includes(w)) matches++; });
+
+                    const score = Math.round((matches / Math.max(1, words2.length)) * 100);
+                    const finalScore = Math.min(100, score);
+
+                    const accuracyUi = document.getElementById('tts-accuracy');
+                    if (accuracyUi) {
+                        accuracyUi.classList.remove('hidden');
+                        accuracyUi.textContent = `🎯 Skor: %${finalScore}`;
+                        if (finalScore > 70) {
+                            accuracyUi.style.color = 'var(--success)';
+                            accuracyUi.style.borderColor = 'var(--success)';
+                        } else {
+                            accuracyUi.style.color = 'var(--warning)';
+                            accuracyUi.style.borderColor = 'var(--warning)';
+                        }
+
+                        setTimeout(() => accuracyUi.classList.add('hidden'), 3000);
+                    }
+
+                    if (window.GameEngine) {
+                        window.GameEngine.addXP(Math.round(finalScore / 10));
+                    }
+                };
+
+                recognition.onend = () => {
+                    newMicBtn.style.color = '';
+                    newMicBtn.textContent = '🎙️';
+                };
+
+                recognition.onerror = (event) => {
+                    console.error("Speech recognition error", event.error);
+                    newMicBtn.style.color = '';
+                    newMicBtn.textContent = '🎙️';
+                };
+            });
+        } else {
+            newMicBtn.style.opacity = '0.5';
+            newMicBtn.title = "Tarayıcı desteklemiyor";
+        }
+    }
 }
 
 function loadPlanC(ia_id, iframe, fallbackBar) {
@@ -682,6 +769,10 @@ function setupControls() {
                 const val = Math.round(percentage * 100);
                 slider.value = val;
                 if (progressText) progressText.textContent = `${val}%`;
+
+                if (val >= 99 && window.BossFight && !window.BossFight.isDefeated) {
+                    window.BossFight.initFight();
+                }
             }
 
             // V10 RPG Integration: Add 1 XP per page turn

@@ -393,8 +393,9 @@
             background-size: cover;
             background-position: center;
             position: relative;
-            border-radius: 8px;
-            box-shadow: 6px 8px 15px rgba(0, 0, 0, 0.4), inset -2px 0 5px rgba(0, 0, 0, 0.1);
+            border-radius: 4px 12px 12px 4px;
+            box-shadow: 8px 10px 20px rgba(0, 0, 0, 0.5), inset -4px 0 10px rgba(0, 0, 0, 0.2), inset 2px 0 2px rgba(255, 255, 255, 0.2);
+            border-left: 4px solid #1a1a1a;
         }
 
         .book-meta {
@@ -2679,23 +2680,13 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             const btnReadNow = document.getElementById('btn-read-now');
-            const btnSave = document.getElementById('btn-save-offline');
             const btnCancel = document.getElementById('btn-cancel-loader');
 
             if (btnReadNow) btnReadNow.addEventListener('click', async () => {
                 if (!activeBookMeta) return;
-                document.getElementById('dual-loader-modal').classList.add('hidden');
-                const bookId = `net_${Date.now()}`;
-                await window.dbAPI.saveBook(bookId, null, activeBookMeta);
-                openBook(bookId);
-            });
-
-            if (btnSave) btnSave.addEventListener('click', async () => {
-                if (!activeBookMeta) return;
-                const btn = document.getElementById('btn-save-offline');
-                const originalText = btn.innerHTML;
-                btn.innerHTML = '⏳ İndiriliyor...';
-                btn.disabled = true;
+                const originalText = btnReadNow.innerHTML;
+                btnReadNow.innerHTML = '⏳ Mühürleniyor...';
+                btnReadNow.disabled = true;
 
                 try {
                     let arrayBuffer = null;
@@ -2714,20 +2705,17 @@
                         await window.dbAPI.saveBookContent(bookId + "_epub", arrayBuffer);
                     }
 
-                    btn.innerHTML = '✅ İndirildi!';
+                    btnReadNow.innerHTML = '✅ Mühürlendi!';
                     setTimeout(() => {
-                        document.getElementById('dual-loader-modal').classList.add('hidden');
-                        btn.innerHTML = originalText;
-                        btn.disabled = false;
-                        location.reload();
-                    }, 1000);
+                        window.location.href = `reader.html?id=${bookId}`;
+                    }, 500);
 
                 } catch (err) {
                     console.error("Offline save failed", err);
-                    btn.innerHTML = '❌ Hata!';
+                    btnReadNow.innerHTML = '❌ Hata!';
                     setTimeout(() => {
-                        btn.innerHTML = originalText;
-                        btn.disabled = false;
+                        btnReadNow.innerHTML = originalText;
+                        btnReadNow.disabled = false;
                     }, 2000);
                 }
             });
@@ -2745,14 +2733,11 @@
         <div
             style="background: var(--bg-surface); padding: 2rem; border-radius: 12px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
             <h3 id="dual-loader-title" style="margin-bottom: 1rem; color: #fff;">Kitap Adı</h3>
-            <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.9rem;">Bu kitabı nasıl açmak
-                istersiniz?</p>
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.9rem;">Bu kitabı cihazınıza
+                kaydetmek ve okumaya başlamak için mühürleyin.</p>
             <div style="display: flex; flex-direction: column; gap: 10px;">
-                <button id="btn-read-now" class="btn primary" style="padding: 12px; font-size: 1.1rem;">⚡ Hızlı Oku
-                    (Ağdan)</button>
-                <button id="btn-save-offline" class="btn secondary"
-                    style="padding: 12px; font-size: 1.1rem; border: 1px solid var(--accent-primary);">💾 Çevrimdışı
-                    Kütüphaneme Ekle</button>
+                <button id="btn-read-now" class="btn primary" style="padding: 12px; font-size: 1.1rem;">📥 Hemen İndir
+                    ve Okumaya Başla</button>
                 <button id="btn-cancel-loader" class="btn text-btn"
                     style="margin-top: 10px; color: var(--text-secondary);">İptal</button>
             </div>
