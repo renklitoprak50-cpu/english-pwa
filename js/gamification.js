@@ -115,4 +115,24 @@ class GameEngine {
 window.GameEngine = new GameEngine();
 document.addEventListener('DOMContentLoaded', () => {
     window.GameEngine.init();
+
+    window.GameEngine.onUpdate((state) => {
+        const setEl = (id, text) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = text;
+        };
+
+        setEl('avatar-icon', state.avatarIcon);
+        setEl('avatar-name', state.avatarName);
+        setEl('player-level', state.level);
+        setEl('player-xp', state.xp);
+
+        const nextXpEl = document.getElementById('player-next-xp');
+        if (nextXpEl) nextXpEl.textContent = state.nextLevelXP;
+
+        setEl('player-streak', state.streak);
+
+        const bar = document.getElementById('player-xp-bar');
+        if (bar) bar.style.width = `${state.progressPercent}%`;
+    });
 });

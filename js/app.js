@@ -109,6 +109,13 @@ async function loadDashboardStats() {
 function createBookCard(meta, isOffline = false, isVerified = false) {
     const div = document.createElement('div');
     div.className = 'book-card glass-panel cursor-pointer';
+    div.style.boxShadow = "8px 12px 24px rgba(0,0,0,0.6)";
+    div.style.border = "1px solid rgba(255,255,255,0.08)";
+    div.style.borderRadius = "12px";
+    div.style.background = "linear-gradient(145deg, #1e2530, #151a22)";
+    div.style.padding = "6px";
+    div.style.display = "flex";
+    div.style.flexDirection = "column";
 
     let typeBadge = '';
     if (meta.type === 'combo') typeBadge = `<div class="audio-badge combo-badge">🎧+📖 Combo</div>`;
@@ -132,30 +139,48 @@ function createBookCard(meta, isOffline = false, isVerified = false) {
     }
 
     div.innerHTML = `
-        <div class="book-cover" style="background-image: url('${meta.cover || 'assets/librivox-cover.png'}')">
+        <div class="book-cover" style="background-image: url('${meta.cover || 'assets/librivox-cover.png'}'); border-radius: 8px; box-shadow: 4px 6px 15px rgba(0,0,0,0.5);">
              ${meta.language_level ? `<span class="level-badge">${meta.language_level.split(' ')[0]}</span>` : ''}
              ${gutenbergBadge}
              ${typeBadge}
         </div>
-        <div class="book-meta" style="flex-grow:1;">
-            <h4 class="book-title truncate" title="${meta.title}">
-                <span class="lang-flag">${flag}</span>${meta.title}
-            </h4>
-            <p class="book-author truncate" title="${meta.author || 'Bilinmiyor'}">${meta.author || 'Bilinmiyor'}</p>
-            ${isOffline || isVerified ? `<span style="font-size:0.7rem;color:var(--success); font-weight:bold;">${isOffline ? 'İndirilmiş' : 'Doğrulanmış Kütüphanem'}</span>` : ''}
+        <div class="book-meta" style="flex-grow:1; display:flex; flex-direction:column; justify-content:space-between; padding-top:8px;">
+            <div>
+                <h4 class="book-title truncate" title="${meta.title}">
+                    <span class="lang-flag">${flag}</span>${meta.title}
+                </h4>
+                <p class="book-author truncate" title="${meta.author || 'Bilinmiyor'}">${meta.author || 'Bilinmiyor'}</p>
+                ${isOffline || isVerified ? `<span style="font-size:0.75rem;color:var(--success); font-weight:bold;">${isOffline ? 'İndirilmiş' : 'Doğrulanmış Kütüphanem'}</span>` : ''}
+            </div>
+            
+            ${!isOffline ? `<button class="btn primary full-width mt-2 btn-direct-download" style="font-size:0.8rem; padding:6px; font-weight:bold; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4); border-radius:6px; margin-top:8px;">Hemen İndir ve Oku</button>` : ''}
         </div>
     `;
+
+    // Direct Download & Seal Logic
+    const dlBtn = div.querySelector('.btn-direct-download');
+    if (dlBtn) {
+        dlBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            dlBtn.textContent = 'Mühürleniyor...';
+            // Seal to indexedDB as off_
+            const bookId = `off_${meta.id || Date.now()}`;
+            await window.dbAPI.saveBook(bookId, null, meta);
+            openBook(bookId);
+        });
+    }
 
     // V6.1 Action Buttons for Global Search
     if (!isOffline && currentTab === 'global') {
         const actionDiv = document.createElement('div');
         actionDiv.className = 'book-actions';
+        actionDiv.style.marginTop = '8px';
+        actionDiv.style.borderRadius = '6px';
         actionDiv.innerHTML = `
              <button class="action-verify" title="Doğrulanmış Kütüphaneye Ekle">✅ Doğrula</button>
              <button class="action-hide" title="Gizle ve Kara Listeye Al">❌ Gizle</button>
         `;
 
-        // Prevent click events from propagating to the card wrapper which normally opens reader
         actionDiv.addEventListener('click', (e) => e.stopPropagation());
 
         const verifyBtn = actionDiv.querySelector('.action-verify');

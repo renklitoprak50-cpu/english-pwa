@@ -99,7 +99,9 @@ async function initNativeReader(meta) {
     document.getElementById('local-viewer-layer').classList.add('hidden');
     document.getElementById('book-progress').classList.add('hidden');
 
-    const bookId = meta.id || meta.ia_id;
+    const baseBookId = meta.id || meta.ia_id;
+    const activeBookId = localStorage.getItem('activeBookId') || baseBookId;
+    const cacheKey = activeBookId.startsWith('off_') ? activeBookId : baseBookId;
 
     // V9 Legacy Metadata Patch: Reconstruct EPUB URL if missing from Old Caches
     if (meta.isGutenberg && !meta.epub_url && meta.ia_id) {
@@ -115,31 +117,31 @@ async function initNativeReader(meta) {
         if (textLayer) textLayer.classList.add('hidden');
 
         try {
-            // Check cache for arrayBuffer
-            const cachedEpub = await window.dbAPI.getBookContent(bookId + "_epub");
+            // Check cache for arrayBuffer with Mühür (Sealed) priority
+            const cachedEpub = await window.dbAPI.getBookContent(cacheKey + "_epub");
             let arrayBuffer;
             if (cachedEpub) {
                 arrayBuffer = cachedEpub;
             } else {
                 // Try Vercel Serverless Proxy
-                let res = await fetch('/api/proxy?url=' + encodeURIComponent(meta.epub_url));
+                let res = await fetch('/api/proxy?url=' + encodeURIComponent(meta.epub_url), { redirect: 'follow' });
 
                 // If Vercel Proxy fails (e.g., 4.5MB payload limit on Serverless Functions), fallback to allorigins.win
                 if (!res.ok) {
                     console.warn("Vercel proxy failed, trying allorigins fallback...");
-                    res = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(meta.epub_url));
+                    res = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(meta.epub_url), { redirect: 'follow' });
                 }
 
                 // Final fallback just in case
                 if (!res.ok) {
                     console.warn("Allorigins failed, trying corsproxy.io...");
-                    res = await fetch('https://corsproxy.io/?' + encodeURIComponent(meta.epub_url));
+                    res = await fetch('https://corsproxy.io/?' + encodeURIComponent(meta.epub_url), { redirect: 'follow' });
                 }
 
                 if (!res.ok) throw new Error("All EPUB Proxies Failed");
 
                 arrayBuffer = await res.arrayBuffer();
-                await window.dbAPI.saveBookContent(bookId + "_epub", arrayBuffer);
+                await window.dbAPI.saveBookContent(cacheKey + "_epub", arrayBuffer);
             }
             fallbackBar.classList.add('hidden');
             initEpubReader(arrayBuffer);
@@ -150,7 +152,7 @@ async function initNativeReader(meta) {
     }
 
     // 1. Check Local DB (Single-Fetch constraint)
-    const cachedText = await window.dbAPI.getBookContent(bookId);
+    const cachedText = await window.dbAPI.getBookContent(cacheKey);
     if (cachedText) {
         renderNativeText(cachedText, textLayer, textTarget, ttsController);
         return;
@@ -170,7 +172,7 @@ async function initNativeReader(meta) {
         // V8: Attempt 1 - Format URL from Gutendex via LingoBooks Proxy
         if (meta.format_url) {
             const proxyUrl = '/api/proxy?url=' + encodeURIComponent(meta.format_url);
-            res = await fetch(proxyUrl);
+            res = await fetch(proxyUrl, { redirect: 'follow' });
             if (res.ok) {
                 textResult = await res.text();
                 // Strip HTML if it's an HTML format
@@ -188,7 +190,7 @@ async function initNativeReader(meta) {
             const directHtmlUrl = `https://www.gutenberg.org/files/${meta.ia_id}/${meta.ia_id}-h/${meta.ia_id}-h.htm`;
             const proxyHtmlUrl = '/api/proxy?url=' + encodeURIComponent(directHtmlUrl);
 
-            res = await fetch(proxyHtmlUrl);
+            res = await fetch(proxyHtmlUrl, { redirect: 'follow' });
             if (res.ok) {
                 textResult = await res.text();
                 const temp = document.createElement('div');
@@ -200,17 +202,17 @@ async function initNativeReader(meta) {
         // Attempt 3: Fallback Archive.org _djvu.txt & .txt
         if (!textResult && meta.ia_id) {
             if (fallbackText) fallbackText.textContent = "Alternatif Arşiv metni aranıyor...";
-            res = await fetch(`https://archive.org/cors/${meta.ia_id}/${meta.ia_id}_djvu.txt`);
+            res = await fetch(`https://archive.org/cors/${meta.ia_id}/${meta.ia_id}_djvu.txt`, { redirect: 'follow' });
             if (res.ok) textResult = await res.text();
 
             if (!textResult || textResult.trim().length === 0) {
-                res = await fetch(`https://archive.org/cors/${meta.ia_id}/${meta.ia_id}.txt`);
+                res = await fetch(`https://archive.org/cors/${meta.ia_id}/${meta.ia_id}.txt`, { redirect: 'follow' });
                 if (res.ok) textResult = await res.text();
             }
         }
 
         if (textResult && textResult.trim().length > 50) {
-            await window.dbAPI.saveBookContent(bookId, textResult);
+            await window.dbAPI.saveBookContent(cacheKey, textResult);
             fallbackBar.classList.add('hidden');
             renderNativeText(textResult, textLayer, textTarget, ttsController);
         } else {
@@ -250,6 +252,22 @@ function renderNativeText(text, layer, target, ttsController) {
         span.className = 'tts-chunk cursor-pointer';
         span.dataset.index = index;
 
+        // Inline Microphone Button for Shadowing per sentence
+        const wrapper = document.createElement('span');
+        wrapper.className = 'sentence-wrapper';
+        wrapper.style.position = 'relative';
+        wrapper.style.display = 'inline';
+
+        const micBtn = document.createElement('button');
+        micBtn.innerHTML = '🎙️';
+        micBtn.style.fontSize = '0.9rem';
+        micBtn.style.background = 'transparent';
+        micBtn.style.border = 'none';
+        micBtn.style.cursor = 'pointer';
+        micBtn.style.marginLeft = '4px';
+        micBtn.style.opacity = '0.6';
+        micBtn.title = 'Shadowing Test';
+
         // V8 Apple Books Style: Select to Translate
         span.addEventListener('pointerup', (e) => {
             const selection = window.getSelection();
@@ -260,7 +278,14 @@ function renderNativeText(text, layer, target, ttsController) {
             }
         });
 
-        target.appendChild(span);
+        micBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            startSentenceShadowing(chunk.trim(), micBtn);
+        });
+
+        wrapper.appendChild(span);
+        wrapper.appendChild(micBtn);
+        target.appendChild(wrapper);
         ttsSpans.push(span);
     });
 
@@ -276,6 +301,69 @@ function renderNativeText(text, layer, target, ttsController) {
             }
         });
     }, 150);
+}
+
+// =====================================
+// SHADOWING API LOGIC
+// =====================================
+function startSentenceShadowing(targetText, micBtn) {
+    if (!targetText) return;
+
+    if (window.speechSynthesis && window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+    }
+
+    if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+        alert("Tarayıcınız ses tanıma (SpeechRecognition) özelliğini desteklemiyor.");
+        return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    if (currentBookMeta && currentBookMeta.langMap && currentBookMeta.langMap.speech) {
+        recognition.lang = currentBookMeta.langMap.speech;
+    } else {
+        recognition.lang = window.globals.getActiveLanguageMap().speech;
+    }
+
+    micBtn.innerHTML = '🔴';
+    micBtn.style.opacity = '1';
+
+    recognition.start();
+
+    recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript.toLowerCase();
+        const targetLower = targetText.toLowerCase().replace(/[.,!?;:]/g, '');
+
+        const words1 = transcript.split(' ');
+        const words2 = targetLower.split(' ');
+        let matches = 0;
+        words1.forEach(w => { if (words2.includes(w)) matches++; });
+
+        const score = Math.round((matches / Math.max(1, words2.length)) * 100);
+        const finalScore = Math.min(100, score);
+
+        let color = finalScore > 70 ? 'var(--success)' : 'var(--warning)';
+        micBtn.innerHTML = `<span style="font-size:0.75rem; color:${color}; font-weight:bold;">%${finalScore}</span>`;
+
+        if (window.GameEngine) {
+            window.GameEngine.addXP(Math.round(finalScore / 10));
+        }
+
+        setTimeout(() => {
+            micBtn.innerHTML = '🎙️';
+            micBtn.style.opacity = '0.6';
+        }, 5000);
+    };
+
+    recognition.onerror = (event) => {
+        console.error("Speech recognition error", event.error);
+        micBtn.innerHTML = '🎙️';
+        micBtn.style.opacity = '0.6';
+    };
 }
 
 // =====================================
