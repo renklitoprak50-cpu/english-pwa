@@ -14,9 +14,18 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (event) => {
   const url = event.request.url;
-  if (url.includes('allorigins') || url.startsWith('blob:') || url.includes('google') || url.startsWith('data:')) {
-    event.respondWith(fetch(event.request, { redirect: 'follow' }));
-    return;
+
+  // BYPASS SERVICE WORKER COMPLETELY FOR THESE URLS
+  // Fixes "redirected response was used for a request whose redirect mode is not 'follow'"
+  if (
+    url.includes('allorigins') ||
+    url.includes('corsproxy.io') ||
+    url.includes('/api/proxy') ||
+    url.startsWith('blob:') ||
+    url.includes('google') ||
+    url.startsWith('data:')
+  ) {
+    return; // Let browser natively handle it
   }
 
   event.respondWith(
