@@ -2414,16 +2414,40 @@ function createBookCard(meta, isOffline = false, isVerified = false) {
         </div>
     `;
 
-    // Direct Download & Seal Logic
+    // Direct Download & Seal Logic via Serverless Proxy
     const dlBtn = div.querySelector('.btn-direct-download');
     if (dlBtn) {
         dlBtn.addEventListener('click', async (e) => {
             e.stopPropagation();
             dlBtn.textContent = 'Mühürleniyor...';
-            // Seal to indexedDB as off_
+            dlBtn.disabled = true;
+
             const bookId = `off_${meta.id || Date.now()}`;
-            await window.dbAPI.saveBook(bookId, null, meta);
-            openBook(bookId);
+
+            try {
+                let arrayBuffer = null;
+
+                // V10: If it's an EPUB, route STRICTLY through our API proxy
+                if (meta.epub_url) {
+                    const proxyUrl = '/api/proxy?url=' + encodeURIComponent(meta.epub_url);
+                    const res = await fetch(proxyUrl, { redirect: 'follow' });
+
+                    if (!res.ok) throw new Error("API Proxy failed to download EPUB");
+                    arrayBuffer = await res.arrayBuffer();
+                }
+
+                // Save both the metadata and the raw Binary Buffer 
+                await window.dbAPI.saveBook(bookId, arrayBuffer, meta);
+
+                // Auto-Open the sealed Offline copy
+                openBook(bookId);
+
+            } catch (err) {
+                console.error("Mühürleme hatası (Sealing Error):", err);
+                dlBtn.textContent = 'Hata! Tekrar Dene';
+                dlBtn.disabled = false;
+                dlBtn.style.background = 'var(--error)';
+            }
         });
     }
 
@@ -2723,9 +2747,31 @@ function renderFilteredResults() {
 }
 
 async function setupNetworkReader(meta) {
-    const bookId = `net_${Date.now()}`;
-    await window.dbAPI.saveBook(bookId, null, meta);
-    openBook(bookId);
+    // V10: All network reading now routes through proxy and seals to DB immediately. No more live fetches.
+    const bookId = `off_${meta.id || Date.now()}`;
+
+    // Check if already downloaded
+    const existing = await window.dbAPI.getBook(bookId);
+    if (existing && existing.data) {
+        openBook(bookId);
+        return;
+    }
+
+    try {
+        let arrayBuffer = null;
+        if (meta.epub_url) {
+            const proxyUrl = '/api/proxy?url=' + encodeURIComponent(meta.epub_url);
+            const res = await fetch(proxyUrl, { redirect: 'follow' });
+            if (!res.ok) throw new Error("API Proxy failed to download EPUB");
+            arrayBuffer = await res.arrayBuffer();
+        }
+
+        await window.dbAPI.saveBook(bookId, arrayBuffer, meta);
+        openBook(bookId);
+    } catch (err) {
+        console.error("Kitap açılırken ağ hatası:", err);
+        alert("Kitap indirilemedi. Lütfen bağlantınızı kontrol edin.");
+    }
 }
 
     </script>
@@ -2773,4 +2819,5 @@ async function setupNetworkReader(meta) {
 </body>
 
 </html>
+
 

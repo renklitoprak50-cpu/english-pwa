@@ -23,19 +23,23 @@ module.exports = async (req, res) => {
     try {
         const response = await fetch(targetUrl, {
             headers: {
-                'User-Agent': 'LingoBooks-Serverless-Proxy/1.0'
-            }
+                'User-Agent': 'LingoBooks-Serverless-Proxy/2.0'
+            },
+            redirect: 'follow'
         });
 
         if (!response.ok) {
             return res.status(response.status).json({ error: `Downstream request failed with status ${response.status}` });
         }
 
-        const data = await response.text();
-        const contentType = response.headers.get('content-type') || 'text/plain';
-
+        const contentType = response.headers.get('content-type') || 'application/octet-stream';
         res.setHeader('Content-Type', contentType);
-        res.status(200).send(data);
+
+        // V10: Crucial fix for EPUB (Binary) vs Text files.
+        // We MUST send the raw ArrayBuffer, not .text() to prevent file corruption.
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        res.status(200).send(buffer);
 
     } catch (error) {
         console.error('Proxy Error:', error);

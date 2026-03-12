@@ -2240,134 +2240,50 @@ async function initNativeReader(meta) {
     const activeBookId = localStorage.getItem('activeBookId') || baseBookId;
     const cacheKey = activeBookId.startsWith('off_') ? activeBookId : baseBookId;
 
-    // V9 Legacy Metadata Patch: Reconstruct EPUB URL if missing from Old Caches
-    if (meta.isGutenberg && !meta.epub_url && meta.ia_id) {
-        meta.epub_url = `https://www.gutenberg.org/ebooks/${meta.ia_id}.epub.images`;
-    }
+    // V10: Strict IndexedDB (Mühürlü) Data Priority. No More Direct Internet Downloads.
+    // All downloading is now exclusively handled by app.js (Hemen İndir ve Oku) via api/proxy
 
-    // V8 True EPUB Logic
+    // 1. Check For EPUB Buffer
     if (meta.epub_url) {
         fallbackBar.classList.remove('hidden');
-        if (fallbackText) fallbackText.textContent = "Okuyucu Yükleniyor (EPUB)...";
+        if (fallbackText) fallbackText.textContent = "Yerel Okuyucu Yükleniyor (EPUB)...";
         fallbackBar.style.background = 'var(--accent-primary)';
         fallbackBar.style.color = '#fff';
         if (textLayer) textLayer.classList.add('hidden');
 
         try {
-            // Check cache for arrayBuffer with Mühür (Sealed) priority
             const cachedEpub = await window.dbAPI.getBookContent(cacheKey + "_epub");
-            let arrayBuffer;
             if (cachedEpub) {
-                arrayBuffer = cachedEpub;
+                fallbackBar.classList.add('hidden');
+                initEpubReader(cachedEpub);
+                return;
             } else {
-                // Try Vercel Serverless Proxy
-                let res = await fetch('/api/proxy?url=' + encodeURIComponent(meta.epub_url), { redirect: 'follow' });
-
-                // If Vercel Proxy fails (e.g., 4.5MB payload limit on Serverless Functions), fallback to allorigins.win
-                if (!res.ok) {
-                    console.warn("Vercel proxy failed, trying allorigins fallback...");
-                    res = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(meta.epub_url), { redirect: 'follow' });
-                }
-
-                // Final fallback just in case
-                if (!res.ok) {
-                    console.warn("Allorigins failed, trying corsproxy.io...");
-                    res = await fetch('https://corsproxy.io/?' + encodeURIComponent(meta.epub_url), { redirect: 'follow' });
-                }
-
-                if (!res.ok) throw new Error("All EPUB Proxies Failed");
-
-                arrayBuffer = await res.arrayBuffer();
-                await window.dbAPI.saveBookContent(cacheKey + "_epub", arrayBuffer);
+                // If it reaches here, the book wasn't properly downloaded by app.js
+                throw new Error("EPUB Verisi Yerel Veritabanında Bulunamadı (Not Sealed properly).");
             }
-            fallbackBar.classList.add('hidden');
-            initEpubReader(arrayBuffer);
-            return; // STRICT RETURN: We NEVER fall back to text if EPUB is available.
         } catch (e) {
-            console.error("CRITICAL: EPUB Download completely failed. Falling back to text as last resort.", e);
+            console.error("CRITICAL: EPUB Local Load failed.", e);
+            alert("Kitap yerel bellekte bulunamadı. Lütfen kütüphaneden tekrar indiriniz.");
+            window.location.href = 'index.html';
+            return;
         }
     }
 
-    // 1. Check Local DB (Single-Fetch constraint)
+    // 2. Check Local DB for Text
     const cachedText = await window.dbAPI.getBookContent(cacheKey);
     if (cachedText) {
         renderNativeText(cachedText, textLayer, textTarget, ttsController);
         return;
     }
 
-    // 2. Client-Side Fetch
+    // 3. Absolute Fallback: If no local data exists at all
     fallbackBar.classList.remove('hidden');
-    if (fallbackText) fallbackText.textContent = "Kitap indiriliyor...";
-    fallbackBar.style.background = 'var(--accent-primary)';
+    if (fallbackText) fallbackText.textContent = "Veri Mühürlenmemiş!";
+    fallbackBar.style.background = 'var(--error)';
     fallbackBar.style.color = '#fff';
-    if (textLayer) textLayer.classList.add('hidden');
 
-    try {
-        let textResult = null;
-        let res;
-
-        // V8: Attempt 1 - Format URL from Gutendex via LingoBooks Proxy
-        if (meta.format_url) {
-            const proxyUrl = '/api/proxy?url=' + encodeURIComponent(meta.format_url);
-            res = await fetch(proxyUrl, { redirect: 'follow' });
-            if (res.ok) {
-                textResult = await res.text();
-                // Strip HTML if it's an HTML format
-                if (meta.format_url.includes('html')) {
-                    const temp = document.createElement('div');
-                    temp.innerHTML = textResult;
-                    textResult = temp.textContent || temp.innerText || "";
-                }
-            }
-        }
-
-        // V8: Attempt 2 - Direct Gutenberg HTML Fallback via LingoBooks Proxy
-        if (!textResult && meta.ia_id) {
-            if (fallbackText) fallbackText.textContent = "Doğrudan Gutenberg bağlantısı deneniyor...";
-            const directHtmlUrl = `https://www.gutenberg.org/files/${meta.ia_id}/${meta.ia_id}-h/${meta.ia_id}-h.htm`;
-            const proxyHtmlUrl = '/api/proxy?url=' + encodeURIComponent(directHtmlUrl);
-
-            res = await fetch(proxyHtmlUrl, { redirect: 'follow' });
-            if (res.ok) {
-                textResult = await res.text();
-                const temp = document.createElement('div');
-                temp.innerHTML = textResult;
-                textResult = temp.textContent || temp.innerText || "";
-            }
-        }
-
-        // Attempt 3: Fallback Archive.org _djvu.txt & .txt
-        if (!textResult && meta.ia_id) {
-            if (fallbackText) fallbackText.textContent = "Alternatif Arşiv metni aranıyor...";
-            res = await fetch(`https://archive.org/cors/${meta.ia_id}/${meta.ia_id}_djvu.txt`, { redirect: 'follow' });
-            if (res.ok) textResult = await res.text();
-
-            if (!textResult || textResult.trim().length === 0) {
-                res = await fetch(`https://archive.org/cors/${meta.ia_id}/${meta.ia_id}.txt`, { redirect: 'follow' });
-                if (res.ok) textResult = await res.text();
-            }
-        }
-
-        if (textResult && textResult.trim().length > 50) {
-            await window.dbAPI.saveBookContent(cacheKey, textResult);
-            fallbackBar.classList.add('hidden');
-            renderNativeText(textResult, textLayer, textTarget, ttsController);
-        } else {
-            throw new Error("Text not found or empty");
-        }
-    } catch (e) {
-        console.warn("Direct fetch failed", e);
-        if (fallbackText) fallbackText.textContent = "Metin okunamadı, eski sürüm Embed deneniyor...";
-        fallbackBar.style.background = 'var(--warning)';
-        fallbackBar.style.color = '#000';
-        if (meta.ia_id) {
-            const iframe = document.getElementById('embed-viewer');
-            if (iframe) iframe.classList.remove('hidden');
-            loadPlanC(meta.ia_id, iframe, fallbackBar);
-        } else {
-            showFinalError();
-        }
-    }
+    alert("Hata: Kitap yerel veritabanında (Mühürlü) değil. Lütfen vitrine dönüp 'Hemen İndir ve Oku' butonunu kullanın.");
+    setTimeout(() => { window.location.href = 'index.html'; }, 2000);
 }
 
 function renderNativeText(text, layer, target, ttsController) {
@@ -3287,4 +3203,5 @@ function closeSideDrawer() {
 </body>
 
 </html>
+
 
