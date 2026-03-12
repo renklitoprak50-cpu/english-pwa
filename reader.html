@@ -3134,9 +3134,29 @@ function initEpubReader(arrayBuffer) {
     }
 
     epubRendition = epubBook.renderTo("epub-render-target", {
-        width: "100%", height: "100%", spread: defaultSpread
+        width: "100%",
+        height: "100%",
+        spread: defaultSpread,
+        manager: "continuous",
+        flow: "paginated",
+        snap: true
     });
 
+    // Register a comfortable theme for the epub engine
+    epubRendition.themes.register("elite-comfort", {
+        "body": {
+            "padding": "0 5%",
+            "line-height": "1.6 !important",
+            "font-family": "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important",
+            "color": "var(--text-primary) !important",
+            "background": "transparent !important"
+        },
+        "p": {
+            "font-size": "1.1rem !important",
+            "margin-bottom": "1em !important"
+        }
+    });
+    epubRendition.themes.select("elite-comfort");
     epubRendition.themes.fontSize(defaultZoom);
 
     epubBook.ready.then(() => {
@@ -3267,3 +3287,4 @@ function closeSideDrawer() {
 </body>
 
 </html>
+
