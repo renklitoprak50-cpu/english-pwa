@@ -823,7 +823,15 @@ function setupControls() {
         });
 
         slider.addEventListener('input', (e) => {
-            if (progressText) progressText.textContent = `${e.target.value}%`;
+            if (progressText) {
+                if (epubBook && epubBook.locations && epubBook.locations.total) {
+                    const total = epubBook.locations.total;
+                    const approxPage = Math.round((e.target.value / 100) * total);
+                    progressText.textContent = `Sayfa ${approxPage} / ${total}`;
+                } else {
+                    progressText.textContent = `${e.target.value}%`;
+                }
+            }
         });
 
         window.addEventListener('epub-relocated', (e) => {
@@ -831,7 +839,12 @@ function setupControls() {
                 const percentage = epubBook.locations.percentageFromCfi(e.detail.start.cfi);
                 const val = Math.round(percentage * 100);
                 slider.value = val;
-                if (progressText) progressText.textContent = `${val}%`;
+
+                if (progressText) {
+                    const currentPage = epubBook.locations.locationFromCfi(e.detail.start.cfi);
+                    const totalPages = epubBook.locations.total;
+                    progressText.textContent = totalPages ? `Sayfa ${currentPage} / ${totalPages}` : `${val}%`;
+                }
 
                 if (val >= 99 && window.BossFight && !window.BossFight.isDefeated) {
                     window.BossFight.initFight();
@@ -1005,6 +1018,8 @@ function initEpubReader(arrayBuffer) {
             p.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
             const utterance = new SpeechSynthesisUtterance(text);
+            window._currentMobileUtterance = utterance; // V16 GC Bug Fix
+
             let langCode = 'en-US';
             if (window.currentBookMeta && window.currentBookMeta.langMap) langCode = window.currentBookMeta.langMap.speech;
             else if (window.globals) langCode = window.globals.getActiveLanguageMap().speech;
@@ -1018,13 +1033,17 @@ function initEpubReader(arrayBuffer) {
                 playNextTTS();
             };
 
-            utterance.onerror = () => {
+            utterance.onerror = (e) => {
+                console.warn('TTS Error:', e);
                 p.style.backgroundColor = 'transparent';
                 ttsIndex++;
                 playNextTTS();
             };
 
-            window.speechSynthesis.speak(utterance);
+            // Small delay helps mobile engines initialize strictly after click
+            setTimeout(() => {
+                window.speechSynthesis.speak(utterance);
+            }, 50);
         }
 
         listenBtn.addEventListener('click', () => {
@@ -1141,7 +1160,11 @@ function initEpubReader(arrayBuffer) {
 
     epubBook.ready.then(() => {
         return epubBook.locations.generate(1600);
-    }).then(() => { });
+    }).then(() => {
+        if (epubRendition && window.epubBook.locations.length() > 0 && epubRendition.currentLocation()) {
+            window.dispatchEvent(new CustomEvent('epub-relocated', { detail: epubRendition.currentLocation() }));
+        }
+    });
 
     window.dbAPI.getProgress('currentBook').then(prog => {
         if (prog && prog.location) epubRendition.display(prog.location);
