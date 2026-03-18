@@ -699,7 +699,8 @@
             width: 15vw;
             max-width: 80px;
             background: transparent;
-            color: rgba(255, 255, 255, 0.8); background: rgba(0,0,0,0.1);
+            color: rgba(255, 255, 255, 0.8);
+            background: rgba(0, 0, 0, 0.1);
             border: none;
             z-index: 150;
         }
@@ -1211,7 +1212,7 @@ window.globals = {
                     </svg>
                 </button>
                 <div id="epub-render-target"
-                    style="z-index: 100 !important; position: relative; background: transparent !important;">
+                    style="z-index: 100 !important; position: relative; background: transparent !important; padding: 20px 6vw; box-sizing: border-box; max-width: 1100px; margin: 0 auto;">
                 </div>
                 <canvas id="pdf-canvas" class="hidden"></canvas>
                 <button id="next-page" class="nav-btn next fade" aria-label="Next">
@@ -1307,7 +1308,20 @@ window.globals = {
                     style="flex:1; background: #fbf0d9; color: #3d3024; border: 1px solid #d5c8b2;">Sepia</button>
                 <button class="btn theme-btn" data-theme="dark"
                     style="flex:1; background: #1a1a1a; color: #fff; border: 1px solid #333;">Dark</button>
-            </div><div style="margin-top: 15px; display: flex; flex-direction: column; gap: 8px;"><h5 style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 4px;">Özel Renkler</h5><div style="display: flex; gap: 15px; align-items: center;"><label style="font-size: 0.85rem; display: flex; flex-direction: column; gap: 4px;">Yazı Rengi<input type="color" id="custom-text-color" value="#ffffff" style="width: 40px; height: 30px; border: none; cursor: pointer;"></label><label style="font-size: 0.85rem; display: flex; flex-direction: column; gap: 4px;">Arka Plan<input type="color" id="custom-bg-color" value="#111827" style="width: 40px; height: 30px; border: none; cursor: pointer;"></label><button id="btn-apply-custom-colors" class="btn primary" style="padding: 4px 12px; font-size: 0.8rem; margin-top: auto; border-radius: 8px;">Uygula</button></div></div>
+            </div>
+            <div style="margin-top: 15px; display: flex; flex-direction: column; gap: 8px;">
+                <h5 style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 4px;">Özel Renkler</h5>
+                <div style="display: flex; gap: 15px; align-items: center;"><label
+                        style="font-size: 0.85rem; display: flex; flex-direction: column; gap: 4px;">Yazı Rengi<input
+                            type="color" id="custom-text-color" value="#ffffff"
+                            style="width: 40px; height: 30px; border: none; cursor: pointer;"></label><label
+                        style="font-size: 0.85rem; display: flex; flex-direction: column; gap: 4px;">Arka Plan<input
+                            type="color" id="custom-bg-color" value="#111827"
+                            style="width: 40px; height: 30px; border: none; cursor: pointer;"></label><button
+                        id="btn-apply-custom-colors" class="btn primary"
+                        style="padding: 4px 12px; font-size: 0.8rem; margin-top: auto; border-radius: 8px;">Uygula</button>
+                </div>
+            </div>
 
             <!-- V9 True EPUB Engine Controls -->
             <div style="margin-top: 20px;">
@@ -3085,21 +3099,34 @@ function initEpubReader(arrayBuffer) {
         epubActionBar = document.createElement('div');
         epubActionBar.id = 'epub-action-bar';
         epubActionBar.className = 'floating-ui floating-top';
-        epubActionBar.style.cssText = 'position:absolute; gap: 10px; padding: 10px 20px; z-index: 200; display: flex; justify-content: center; top: 10px; width: 100%; pointer-events: none;';
+        epubActionBar.style.cssText = 'position:absolute; gap: 8px; padding: 10px 15px; z-index: 200; display: flex; justify-content: center; align-items: center; top: 10px; width: 100%; pointer-events: none; flex-wrap: wrap;';
 
+        // EXIT BUTTON
+        const exitBtn = document.createElement('button');
+        exitBtn.id = 'btn-epub-exit';
+        exitBtn.className = 'btn secondary';
+        exitBtn.style.cssText = 'pointer-events: auto; font-weight: bold; border-radius: 20px; background: rgba(220, 38, 38, 0.8); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 6px 12px; font-size: 0.85rem; display: flex; align-items: center; gap: 4px;';
+        exitBtn.innerHTML = '🏠 Kütüphane';
+        epubActionBar.appendChild(exitBtn);
+
+        exitBtn.addEventListener('click', () => {
+            window.speechSynthesis.cancel();
+            window.location.href = 'index.html';
+        });
+
+        // LISTEN BUTTON
         const listenBtn = document.createElement('button');
         listenBtn.id = 'btn-epub-listen';
         listenBtn.className = 'btn primary';
-        listenBtn.style.cssText = 'pointer-events: auto; font-weight: bold; border-radius: 20px; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4); padding: 6px 16px; display: flex; align-items: center; gap: 8px; font-size: 0.9rem;';
-        listenBtn.innerHTML = '🔊 Sayfayı Dinle';
-
+        listenBtn.style.cssText = 'pointer-events: auto; font-weight: bold; border-radius: 20px; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4); padding: 6px 12px; display: flex; align-items: center; gap: 4px; font-size: 0.85rem;';
+        listenBtn.innerHTML = '🔊 Dinle';
         epubActionBar.appendChild(listenBtn);
 
-        // V14 Explicit Settings Button
+        // SETTINGS BUTTON
         const settingsBtn = document.createElement('button');
         settingsBtn.id = 'btn-epub-settings';
         settingsBtn.className = 'btn secondary';
-        settingsBtn.style.cssText = 'pointer-events: auto; font-weight: bold; border-radius: 20px; background: rgba(50,50,50,0.8); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 6px 16px; display: flex; align-items: center; gap: 8px; font-size: 0.9rem;';
+        settingsBtn.style.cssText = 'pointer-events: auto; font-weight: bold; border-radius: 20px; background: rgba(50,50,50,0.8); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 6px 12px; display: flex; align-items: center; gap: 4px; font-size: 0.85rem;';
         settingsBtn.innerHTML = '⚙️ Ayarlar';
         epubActionBar.appendChild(settingsBtn);
 
@@ -3110,6 +3137,47 @@ function initEpubReader(arrayBuffer) {
             document.getElementById('drawer-overlay').classList.add('active');
         });
 
+        let ttsQueue = [];
+        let ttsIndex = 0;
+
+        function playNextTTS() {
+            if (ttsIndex >= ttsQueue.length) {
+                listenBtn.innerHTML = '🔊 Sayfayı Dinle';
+                return;
+            }
+            const item = ttsQueue[ttsIndex];
+            const p = item.element;
+            const text = item.text;
+
+            p.style.backgroundColor = 'rgba(255, 255, 0, 0.3)'; // Highlight paragraph
+            p.style.borderRadius = '4px';
+            p.style.transition = 'background-color 0.2s';
+
+            p.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            let langCode = 'en-US';
+            if (window.currentBookMeta && window.currentBookMeta.langMap) langCode = window.currentBookMeta.langMap.speech;
+            else if (window.globals) langCode = window.globals.getActiveLanguageMap().speech;
+
+            utterance.lang = langCode;
+            utterance.rate = 1.0;
+
+            utterance.onend = () => {
+                p.style.backgroundColor = 'transparent';
+                ttsIndex++;
+                playNextTTS();
+            };
+
+            utterance.onerror = () => {
+                p.style.backgroundColor = 'transparent';
+                ttsIndex++;
+                playNextTTS();
+            };
+
+            window.speechSynthesis.speak(utterance);
+        }
+
         listenBtn.addEventListener('click', () => {
             if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
                 window.speechSynthesis.pause();
@@ -3119,24 +3187,25 @@ function initEpubReader(arrayBuffer) {
                 listenBtn.innerHTML = '⏸ Duraklat';
             } else {
                 if (window.epubRendition && window.epubRendition.getContents().length > 0) {
-                    const doc = window.epubRendition.getContents()[0].document;
-                    const textContent = doc.body.textContent || doc.body.innerText || '';
-                    if (textContent.trim()) {
-                        const utterance = new SpeechSynthesisUtterance(textContent.trim());
-                        let langCode = 'en-US';
-                        if (window.currentBookMeta && window.currentBookMeta.langMap) {
-                            langCode = window.currentBookMeta.langMap.speech;
-                        } else if (window.globals) {
-                            langCode = window.globals.getActiveLanguageMap().speech;
-                        }
-                        utterance.lang = langCode;
-                        utterance.rate = 1.0;
-                        window.speechSynthesis.speak(utterance);
-                        listenBtn.innerHTML = '⏸ Duraklat';
+                    window.speechSynthesis.cancel();
+                    ttsQueue = [];
+                    ttsIndex = 0;
 
-                        utterance.onend = () => {
-                            listenBtn.innerHTML = '🔊 Sayfayı Okumaya Başla';
-                        };
+                    const doc = window.epubRendition.getContents()[0].document;
+                    const paragraphs = doc.querySelectorAll('p, h1, h2, h3, h4, li');
+
+                    paragraphs.forEach(p => {
+                        const txt = p.textContent.trim();
+                        if (txt.length > 2) {
+                            ttsQueue.push({ element: p, text: txt });
+                        }
+                    });
+
+                    if (ttsQueue.length > 0) {
+                        listenBtn.innerHTML = '⏸ Duraklat';
+                        playNextTTS();
+                    } else {
+                        alert("Okunacak metin bulunamadı. Lütfen sayfayı çevirin.");
                     }
                 }
             }
@@ -3195,35 +3264,24 @@ function initEpubReader(arrayBuffer) {
     };
 
     epubRendition.themes.register("light", {
-        "body": { "background": "#f4f4f9 !important", "color": "#111827 !important", ...commonStyles },
-        "p": { "color": "#111827 !important", "background": "transparent !important" },
-        "span": { "color": "#111827 !important", "background": "transparent !important" },
-        "div": { "color": "#111827 !important", "background": "transparent !important" },
-        "h1": { "color": "#111827 !important" }, "h2": { "color": "#111827 !important" }, "h3": { "color": "#111827 !important" }
+        "body": { "background": "#f4f4f9 !important", "color": "#000000 !important", ...commonStyles },
+        "*": { "color": "#000000 !important", "background": "transparent !important" }
     });
 
     epubRendition.themes.register("sepia", {
-        "body": { "background": "#fbf0d9 !important", "color": "#5c4b37 !important", ...commonStyles },
-        "p": { "color": "#5c4b37 !important", "background": "transparent !important" },
-        "span": { "color": "#5c4b37 !important", "background": "transparent !important" },
-        "div": { "color": "#5c4b37 !important", "background": "transparent !important" },
-        "h1": { "color": "#5c4b37 !important" }, "h2": { "color": "#5c4b37 !important" }, "h3": { "color": "#5c4b37 !important" }
+        "body": { "background": "#fbf0d9 !important", "color": "#3d3024 !important", ...commonStyles },
+        "*": { "color": "#3d3024 !important", "background": "transparent !important" }
     });
 
     epubRendition.themes.register("dark", {
         "body": { "background": "#111827 !important", "color": "#f9fafb !important", ...commonStyles },
-        "p": { "color": "#f9fafb !important", "background": "transparent !important" },
-        "span": { "color": "#f9fafb !important", "background": "transparent !important" },
-        "div": { "color": "#f9fafb !important", "background": "transparent !important" },
-        "h1": { "color": "#f9fafb !important" }, "h2": { "color": "#f9fafb !important" }, "h3": { "color": "#f9fafb !important" }
+        "*": { "color": "#f9fafb !important", "background": "transparent !important" }
     });
 
     epubRendition.themes.register("custom", {
         "body": { "background": `${customBgColor} !important`, "color": `${customTextColor} !important`, ...commonStyles },
-        "p": { "color": `${customTextColor} !important`, "background": "transparent !important" },
-        "span": { "color": `${customTextColor} !important`, "background": "transparent !important" },
-        "div": { "color": `${customTextColor} !important`, "background": "transparent !important" },
-        "h1": { "color": `${customTextColor} !important` }, "h2": { "color": `${customTextColor} !important` }, "h3": { "color": `${customTextColor} !important` }
+        "*": { "color": `${customTextColor} !important`, "background": "transparent !important" },
+        "img, svg, video, iframe, canvas, figure, picture, .ignore-color": { "background": "initial !important", "color": "initial !important" }
     });
 
     epubRendition.themes.select(defaultTheme);
@@ -3371,11 +3429,3 @@ function closeSideDrawer() {
 </body>
 
 </html>
-
-
-
-
-
-
-
-
