@@ -961,7 +961,7 @@ function initEpubReader(arrayBuffer) {
         epubActionBar = document.createElement('div');
         epubActionBar.id = 'epub-action-bar';
         epubActionBar.className = 'floating-ui floating-top';
-        epubActionBar.style.cssText = 'position:absolute; gap: 8px; padding: 10px 15px; z-index: 200; display: flex; justify-content: center; align-items: center; top: 10px; width: 100%; pointer-events: none; flex-wrap: wrap;';
+        epubActionBar.style.cssText = 'position:absolute; gap: 8px; padding: calc(10px + env(safe-area-inset-top)) 15px 15px 15px; z-index: 200; display: flex; justify-content: center; align-items: center; top: 0; width: 100%; pointer-events: none; flex-wrap: wrap; background: linear-gradient(to bottom, rgba(10,10,10,0.85) 0%, rgba(10,10,10,0) 100%); transition: opacity 0.3s;';
 
         // EXIT BUTTON
         const exitBtn = document.createElement('button');
@@ -1102,18 +1102,17 @@ function initEpubReader(arrayBuffer) {
             // Sync UI state
             const toggleSpreadBtn = document.getElementById('toggle-spread');
             if (toggleSpreadBtn) {
-                toggleSpreadBtn.textContent = parsed.spread === false ? '📖 Çift Sayfa Görünümü: Kapalı' : '📖 Çift Sayfa Görünümü: Açık';
+                toggleSpreadBtn.textContent = `📖 Çift Sayfa Görünümü: ${parsed.spread === false ? 'Kapalı' : 'Açık'}`;
             }
+
             const zoomSlider = document.getElementById('zoom-slider');
             const zoomVal = document.getElementById('zoom-text-val');
-            if (zoomSlider && zoomVal) {
-                zoomSlider.value = parsed.zoom || 100;
-                zoomVal.textContent = defaultZoom;
+            if (zoomSlider && parsed.zoom) {
+                zoomSlider.value = parsed.zoom;
+                if (zoomVal) zoomVal.textContent = `${parsed.zoom}%`;
             }
         }
-    } catch (e) {
-        console.warn("Failed to load epub settings", e);
-    }
+    } catch (err) { console.warn("EPUB Settings load error", err); }
 
     epubRendition = epubBook.renderTo("epub-render-target", {
         width: "100%",
@@ -1192,6 +1191,29 @@ function initEpubReader(arrayBuffer) {
 
     epubRendition.hooks.content.register((contents, view) => {
         const doc = contents.document;
+
+        // V17 Universal Mobile Selection Fix (Failsafe for epubRendition.on selected missing events on Android/iOS)
+        doc.addEventListener('selectionchange', () => {
+            clearTimeout(window.epubSelectionTimeout);
+            window.epubSelectionTimeout = setTimeout(() => {
+                const sel = contents.window.getSelection();
+                if (sel) {
+                    const word = sel.toString().trim();
+                    if (word && word.length > 1 && word.length < 30) {
+                        try {
+                            const range = sel.getRangeAt(0);
+                            let context = "";
+                            if (range.commonAncestorContainer && range.commonAncestorContainer.textContent) {
+                                context = range.commonAncestorContainer.textContent.trim().substring(0, 150) + "...";
+                            }
+                            if (window.parent && window.parent.handleWordSelection) {
+                                window.parent.handleWordSelection(word, context);
+                            }
+                        } catch (err) { }
+                    }
+                }
+            }, 600);
+        });
 
         // Shadowing & RPG Iframe Entegrasyonu: Paragrafların sonuna mikrofon ekle
         requestAnimationFrame(() => {
