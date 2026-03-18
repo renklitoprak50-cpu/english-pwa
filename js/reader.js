@@ -265,8 +265,17 @@ function startSentenceShadowing(targetText, micBtn) {
         let color = finalScore > 70 ? 'var(--success)' : 'var(--warning)';
         micBtn.innerHTML = `<span style="font-size:0.75rem; color:${color}; font-weight:bold;">%${finalScore}</span>`;
 
+        // 1. Local RPG Integration
         if (window.GameEngine) {
             window.GameEngine.addXP(Math.round(finalScore / 10));
+        }
+
+        // 2. Supabase Integration (Zorunlu Bağlantı)
+        if (window.supabaseSync && window.supabaseSync.saveShadowScore) {
+            window.supabaseSync.saveShadowScore(targetText, transcript, finalScore);
+        } else {
+            // Fallback mock if Supabase script isn't loaded yet
+            console.log(`[Supabase Mühür] Score: ${finalScore}% | Target: "${targetText}" | Spoken: "${transcript}"`);
         }
 
         setTimeout(() => {
@@ -730,21 +739,29 @@ function setupControls() {
     const drawerOverlay = document.getElementById('drawer-overlay');
     if (drawerOverlay) drawerOverlay.addEventListener('click', closeSideDrawer);
 
-    // V8 Theme Settings
+    // V12 Modern Theme Switch logic
     const themeBtns = document.querySelectorAll('.theme-btn');
     themeBtns.forEach(btn => {
         btn.addEventListener('click', (e) => {
             const theme = e.target.getAttribute('data-theme');
-            document.body.className = theme === 'light' ? '' : `${theme}-theme`;
+
+            // Adjust body class (if we need it for outer UI)
+            document.body.className = theme === 'light' ? 'light-theme' : (theme === 'sepia' ? 'sepia-theme' : 'dark-theme');
+            document.body.style.background = theme === 'light' ? '#f4f4f9' : (theme === 'sepia' ? '#fbf0d9' : '#111827');
+
             themeBtns.forEach(b => b.classList.remove('active'));
             e.target.classList.add('active');
 
-            // Apply to EPUB if active
-            if (epubRendition) {
-                let color = theme === 'dark' ? '#fff' : '#3d3024';
-                if (theme === 'light') color = '#000';
-                epubRendition.themes.default({ body: { "color": `${color} !important` } });
+            // Apply to EPUB explicitly using predefined themes
+            if (window.epubRendition) {
+                window.epubRendition.themes.select(theme);
             }
+
+            try {
+                const storedSettings = JSON.parse(localStorage.getItem('epub_settings') || '{}');
+                storedSettings.theme = theme;
+                localStorage.setItem('epub_settings', JSON.stringify(storedSettings));
+            } catch (err) { }
         });
     });
 
@@ -889,12 +906,14 @@ function initEpubReader(arrayBuffer) {
     let defaultSpread = 'auto'; // Will be mapped to 'none' or 'auto'
     let defaultZoom = '100%';
 
+    let defaultTheme = 'dark';
     try {
         const storedSettings = localStorage.getItem('epub_settings');
         if (storedSettings) {
             const parsed = JSON.parse(storedSettings);
             if (parsed.spread === false) defaultSpread = 'none';
             if (parsed.zoom) defaultZoom = `${parsed.zoom}%`;
+            if (parsed.theme) defaultTheme = parsed.theme;
 
             // Sync UI state
             const toggleSpreadBtn = document.getElementById('toggle-spread');
@@ -909,7 +928,7 @@ function initEpubReader(arrayBuffer) {
             }
         }
     } catch (e) {
-        console.warn("Failed to load epub settings from localStorage", e);
+        console.warn("Failed to load epub settings", e);
     }
 
     epubRendition = epubBook.renderTo("epub-render-target", {
@@ -921,29 +940,46 @@ function initEpubReader(arrayBuffer) {
         snap: true
     });
 
-    // Register a comfortable theme for the epub engine
-    epubRendition.themes.register("elite-comfort", {
-        "body": {
-            "padding": "0 5%",
-            "line-height": "1.6 !important",
-            "font-family": "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important",
-            "color": "var(--text-primary) !important",
-            "background": "transparent !important"
-        },
-        "p": {
-            "font-size": "1.1rem !important",
-            "margin-bottom": "1em !important"
-        }
+    // V12: Dynamic Theme Selection with Strict Overrides
+    const commonStyles = {
+        "padding": "0 5% !important",
+        "line-height": "1.6 !important",
+        "font-family": "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important"
+    };
+
+    epubRendition.themes.register("light", {
+        "body": { "background": "#f4f4f9 !important", "color": "#111827 !important", ...commonStyles },
+        "p": { "color": "#111827 !important", "background": "transparent !important" },
+        "span": { "color": "#111827 !important", "background": "transparent !important" },
+        "div": { "color": "#111827 !important", "background": "transparent !important" },
+        "h1": { "color": "#111827 !important" }, "h2": { "color": "#111827 !important" }, "h3": { "color": "#111827 !important" }
     });
-    epubRendition.themes.select("elite-comfort");
+
+    epubRendition.themes.register("sepia", {
+        "body": { "background": "#fbf0d9 !important", "color": "#5c4b37 !important", ...commonStyles },
+        "p": { "color": "#5c4b37 !important", "background": "transparent !important" },
+        "span": { "color": "#5c4b37 !important", "background": "transparent !important" },
+        "div": { "color": "#5c4b37 !important", "background": "transparent !important" },
+        "h1": { "color": "#5c4b37 !important" }, "h2": { "color": "#5c4b37 !important" }, "h3": { "color": "#5c4b37 !important" }
+    });
+
+    epubRendition.themes.register("dark", {
+        "body": { "background": "#111827 !important", "color": "#f9fafb !important", ...commonStyles },
+        "p": { "color": "#f9fafb !important", "background": "transparent !important" },
+        "span": { "color": "#f9fafb !important", "background": "transparent !important" },
+        "div": { "color": "#f9fafb !important", "background": "transparent !important" },
+        "h1": { "color": "#f9fafb !important" }, "h2": { "color": "#f9fafb !important" }, "h3": { "color": "#f9fafb !important" }
+    });
+
+    epubRendition.themes.select(defaultTheme);
     epubRendition.themes.fontSize(defaultZoom);
 
+    // V9 Swipe to turn pages
+    let touchStartX = 0; let touchEndX = 0;
+
     epubBook.ready.then(() => {
-        // Generate locations for slider logic
         return epubBook.locations.generate(1600);
-    }).then(() => {
-        // Locations generated, slider is now ready to use percentage
-    });
+    }).then(() => { });
 
     window.dbAPI.getProgress('currentBook').then(prog => {
         if (prog && prog.location) epubRendition.display(prog.location);
@@ -952,11 +988,10 @@ function initEpubReader(arrayBuffer) {
 
     epubRendition.on("relocated", (location) => {
         window.dbAPI.saveProgress('currentBook', location.start.cfi);
-        // Dispatch event for Slider to update
         window.dispatchEvent(new CustomEvent('epub-relocated', { detail: location }));
     });
 
-    // V9 Native EPUB.js Selection Event (Dictionary Integration)
+    // V9 Native EPUB.js Selection Event
     epubRendition.on("selected", async (cfiRange, contents) => {
         epubBook.getRange(cfiRange).then(range => {
             const word = range.toString().trim();
@@ -971,46 +1006,61 @@ function initEpubReader(arrayBuffer) {
     });
 
     epubRendition.hooks.content.register((contents, view) => {
-        // V8: Let the book breathe, minimal overrides to keep original book layout
-        contents.addStylesheetRules([
-            ['body', ['background-color: transparent !important', 'color: var(--text-primary) !important']]
-        ]);
-
         const doc = contents.document;
+
+        // Shadowing & RPG Iframe Entegrasyonu: Paragrafların sonuna mikrofon ekle
+        requestAnimationFrame(() => {
+            const paragraphs = doc.querySelectorAll('p, li, h1, h2, h3, div.text');
+            paragraphs.forEach(p => {
+                const text = p.textContent.trim();
+                // Sadece yeterli uzunluktaki ve henüz mikrofon eklenmemiş cümlelere mühürle
+                if (text.length > 5 && !p.dataset.shadowEngaged) {
+                    p.dataset.shadowEngaged = "true";
+
+                    const micBtn = doc.createElement('button');
+                    micBtn.innerHTML = '🎙️';
+                    micBtn.className = 'epub-mic-btn';
+                    micBtn.style.cssText = 'background:transparent; border:none; cursor:pointer; font-size:1rem; margin-left:8px; display:inline-block; opacity:0.6; padding:2px; vertical-align:middle;';
+
+                    micBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        // Iframe'den ana pencereye geçiş yapıp Shadowing fonksiyonunu tetikle
+                        window.parent.startSentenceShadowing(text, micBtn);
+                    };
+
+                    p.style.position = 'relative'; // Stabil görünüm için
+                    p.appendChild(micBtn);
+                }
+            });
+        });
 
         // Tap to toggle menu or turn pages
         doc.addEventListener('click', (e) => {
+            const target = e.target;
+            if (target.className === 'epub-mic-btn' || target.closest('.epub-mic-btn')) return;
             if (contents.window.getSelection().toString().trim().length > 0) return;
+
             const x = e.clientX;
             const width = contents.window.innerWidth;
             if (x < width * 0.2) epubRendition.prev();
             else if (x > width * 0.8) epubRendition.next();
             else {
+                const isUIActive = document.querySelector('.floating-ui').classList.contains('active');
                 document.querySelectorAll('.floating-ui').forEach(ui => ui.classList.toggle('active'));
             }
         });
 
-        // V9 Swipe to turn pages
-        let touchStartX = 0;
-        let touchEndX = 0;
-
-        doc.addEventListener('touchstart', e => {
-            touchStartX = e.changedTouches[0].screenX;
-        }, false);
-
+        doc.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, false);
         doc.addEventListener('touchend', e => {
+            if (e.target.className === 'epub-mic-btn' || e.target.closest('.epub-mic-btn')) return;
             touchEndX = e.changedTouches[0].screenX;
             handleSwipe();
         }, false);
 
         function handleSwipe() {
             const swipeThreshold = 50;
-            if (touchEndX < touchStartX - swipeThreshold) {
-                epubRendition.next(); // Swipe left -> next
-            }
-            if (touchEndX > touchStartX + swipeThreshold) {
-                epubRendition.prev(); // Swipe right -> prev
-            }
+            if (touchEndX < touchStartX - swipeThreshold) epubRendition.next();
+            if (touchEndX > touchStartX + swipeThreshold) epubRendition.prev();
         }
     });
 }

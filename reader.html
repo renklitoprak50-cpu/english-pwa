@@ -699,7 +699,7 @@
             width: 15vw;
             max-width: 80px;
             background: transparent;
-            color: rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.8); background: rgba(0,0,0,0.1);
             border: none;
             z-index: 5;
         }
@@ -1146,7 +1146,7 @@ window.globals = {
 
             <button onclick="if(window.BossFight) window.BossFight.initFight()" class="btn"
                 style="background:var(--error); color:#fff; border-radius:12px; font-weight:bold; font-size:0.8rem; margin-right:10px; padding:4px 10px;">
-                👿 Boss Fight
+                ?? Boss Fight
             </button>
 
             <button id="btn-settings" class="icon-btn" aria-label="Settings">
@@ -1164,21 +1164,21 @@ window.globals = {
             style="bottom: 80px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
             <div id="tts-accuracy" class="hidden"
                 style="background: rgba(0,0,0,0.8); color: var(--success); padding: 4px 12px; border-radius: 12px; font-weight: bold; font-size: 0.9rem; border: 1px solid var(--success);">
-                🎯 Skor: Bekleniyor...</div>
+                ?? Skor: Bekleniyor...</div>
             <div class="tts-controls">
-                <button id="tts-prev" class="tts-btn" title="Geri">⏮</button>
-                <button id="tts-play" class="tts-btn active-play" title="Oynat/Duraklat">▶️</button>
-                <button id="tts-stop" class="tts-btn" title="Durdur">⏹</button>
-                <button id="tts-next" class="tts-btn" title="İleri">⏭</button>
-                <button id="tts-mic" class="tts-btn" title="Gölge Konuşma (Shadowing)"
-                    style="margin-left: 10px; border-left: 1px solid rgba(255,255,255,0.2); padding-left: 15px;">🎙️</button>
+                <button id="tts-prev" class="tts-btn" title="Geri">?</button>
+                <button id="tts-play" class="tts-btn active-play" title="Oynat/Duraklat">??</button>
+                <button id="tts-stop" class="tts-btn" title="Durdur">?</button>
+                <button id="tts-next" class="tts-btn" title="�leri">?</button>
+                <button id="tts-mic" class="tts-btn" title="G�lge Konu�ma (Shadowing)"
+                    style="margin-left: 10px; border-left: 1px solid rgba(255,255,255,0.2); padding-left: 15px;">???</button>
             </div>
         </div>
 
         <!-- Fallback Embed Controls (Plan C) / Loading State -->
         <div id="embed-fallback-bar" class="hidden"
             style="background:var(--warning); color:#000; padding:8px; text-align:center; font-size:0.9rem; font-weight:600;">
-            <span id="fallback-text">Kaynak aranıyor...</span>
+            <span id="fallback-text">Kaynak aran�yor...</span>
             <button id="btn-fallback-server" class="btn primary hidden"
                 style="padding:4px 8px; font-size:0.8rem; margin-left:10px; background:#000; color:#fff;">
                 Alternatif Sunucuyu Dene (Plan C)
@@ -1191,16 +1191,16 @@ window.globals = {
             <!-- CRITICAL ERROR PANEL (Zero-Bug Build) -->
             <div id="critical-error-panel" class="hidden"
                 style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; color: #ff4444; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; padding: 20px; text-align: center;">
-                <h1 style="font-size: 2rem; margin-bottom: 20px;">⚠️ SİSTEM HATASI</h1>
+                <h1 style="font-size: 2rem; margin-bottom: 20px;">?? S�STEM HATASI</h1>
                 <p id="critical-error-message"
                     style="font-size: 1.2rem; font-family: monospace; background: rgba(255,0,0,0.1); padding: 15px; border-radius: 8px; border: 1px solid #ff4444;">
                     Bilinmeyen Hata</p>
                 <button onclick="window.location.reload(true)"
                     style="margin-top: 30px; padding: 10px 20px; background: #ff4444; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Sistemi
-                    Yeniden Başlat</button>
+                    Yeniden Ba�lat</button>
                 <button onclick="window.location.href='index.html'"
-                    style="margin-top: 15px; padding: 10px 20px; background: transparent; color: #fff; border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; cursor: pointer;">Kütüphaneye
-                    Dön</button>
+                    style="margin-top: 15px; padding: 10px 20px; background: transparent; color: #fff; border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; cursor: pointer;">K�t�phaneye
+                    D�n</button>
             </div>
 
             <!-- LAYER A: LOCAL BOOKS (EPUB/PDF) -->
@@ -1229,10 +1229,10 @@ window.globals = {
                 <div id="premium-action-bar" class="floating-ui floating-top"
                     style="display: flex; gap: 10px; padding: 10px 20px; background: var(--bg-surface); border-bottom: 1px solid rgba(0,0,0,0.1); justify-content: center; top: 55px;">
                     <button id="btn-start-listening" class="btn primary"
-                        style="font-weight: bold; border-radius: 20px; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4); padding: 6px 16px;">🔊
-                        Dinlemeyi Başlat</button>
+                        style="font-weight: bold; border-radius: 20px; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4); padding: 6px 16px;">??
+                        Dinlemeyi Ba�lat</button>
                     <button id="btn-clear-text" class="btn secondary"
-                        style="font-weight: bold; border-radius: 20px; padding: 6px 16px;">📜 Metni Temizle</button>
+                        style="font-weight: bold; border-radius: 20px; padding: 6px 16px;">?? Metni Temizle</button>
                 </div>
 
                 <div id="text-scroll-area"
@@ -1249,9 +1249,9 @@ window.globals = {
             <!-- LAYER D: ERROR / AUDIO ONLY -->
             <div id="error-viewer" class="hidden"
                 style="display:flex; height:100%; align-items:center; justify-content:center; flex-direction:column; text-align:center;">
-                <h2 id="error-title">📖 Kitap Önizlemeye Kapalı</h2>
-                <p id="error-desc" style="color:var(--text-secondary); margin-top:10px;">Lütfen farklı bir kitap veya
-                    sesli versiyon seçin.</p>
+                <h2 id="error-title">?? Kitap �nizlemeye Kapal�</h2>
+                <p id="error-desc" style="color:var(--text-secondary); margin-top:10px;">L�tfen farkl� bir kitap veya
+                    sesli versiyon se�in.</p>
             </div>
 
         </main>
@@ -1261,7 +1261,7 @@ window.globals = {
             <div class="audio-controls">
                 <audio id="combo-audio" controls crossorigin="anonymous"></audio>
                 <div class="speed-controls">
-                    <span class="speed-label">Hız:</span>
+                    <span class="speed-label">H�z:</span>
                     <button class="btn text-btn speed-btn" data-speed="0.75">0.75x</button>
                     <button class="btn text-btn speed-btn active" data-speed="1.0">1x</button>
                     <button class="btn text-btn speed-btn" data-speed="1.25">1.25x</button>
@@ -1280,26 +1280,26 @@ window.globals = {
     <!-- V8 Elite Side Drawer -->
     <div id="side-drawer" class="side-drawer">
         <div class="drawer-header">
-            <h3>Okuma Seçenekleri</h3>
+            <h3>Okuma Se�enekleri</h3>
             <button id="drawer-close" class="icon-btn" style="font-size: 1.5rem;">&times;</button>
         </div>
 
         <div class="drawer-section">
-            <h4>📖 Sözlük</h4>
+            <h4>?? S�zl�k</h4>
             <div id="drawer-dict-content" style="min-height: 80px;">
-                <p id="drawer-dict-word" style="font-weight: bold; font-size: 1.2rem; margin-bottom: 5px;">Seçilen
+                <p id="drawer-dict-word" style="font-weight: bold; font-size: 1.2rem; margin-bottom: 5px;">Se�ilen
                     Kelime</p>
                 <p id="drawer-dict-phonetic"
                     style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 5px;">...</p>
-                <p id="drawer-dict-def" style="margin-bottom: 10px;">Metin içinden bir kelime seçerek çevirisini
-                    görebilirsiniz.</p>
+                <p id="drawer-dict-def" style="margin-bottom: 10px;">Metin i�inden bir kelime se�erek �evirisini
+                    g�rebilirsiniz.</p>
                 <button id="drawer-dict-save" class="btn primary"
-                    style="width: 100%; font-size: 0.8rem; margin-top: 10px;">Kelime Kartını Kaydet</button>
+                    style="width: 100%; font-size: 0.8rem; margin-top: 10px;">Kelime Kart�n� Kaydet</button>
             </div>
         </div>
 
         <div class="drawer-section">
-            <h4>⚙️ Görünüm Ayarları</h4>
+            <h4>?? G�r�n�m Ayarlar�</h4>
             <div style="display: flex; gap: 10px; margin-top: 10px;">
                 <button class="btn theme-btn" data-theme="light"
                     style="flex:1; background: #fff; color: #000; border: 1px solid #ccc;">Light</button>
@@ -1311,10 +1311,10 @@ window.globals = {
 
             <!-- V9 True EPUB Engine Controls -->
             <div style="margin-top: 20px;">
-                <h5 style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 8px;">Sayfa Düzeni</h5>
+                <h5 style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 8px;">Sayfa D�zeni</h5>
                 <button id="toggle-spread" class="btn secondary"
                     style="width: 100%; border: 1px solid rgba(255,255,255,0.2);">
-                    📖 Çift Sayfa Görünümü: Açık
+                    ?? �ift Sayfa G�r�n�m�: A��k
                 </button>
             </div>
 
@@ -2402,8 +2402,17 @@ function startSentenceShadowing(targetText, micBtn) {
         let color = finalScore > 70 ? 'var(--success)' : 'var(--warning)';
         micBtn.innerHTML = `<span style="font-size:0.75rem; color:${color}; font-weight:bold;">%${finalScore}</span>`;
 
+        // 1. Local RPG Integration
         if (window.GameEngine) {
             window.GameEngine.addXP(Math.round(finalScore / 10));
+        }
+
+        // 2. Supabase Integration (Zorunlu Bağlantı)
+        if (window.supabaseSync && window.supabaseSync.saveShadowScore) {
+            window.supabaseSync.saveShadowScore(targetText, transcript, finalScore);
+        } else {
+            // Fallback mock if Supabase script isn't loaded yet
+            console.log(`[Supabase Mühür] Score: ${finalScore}% | Target: "${targetText}" | Spoken: "${transcript}"`);
         }
 
         setTimeout(() => {
@@ -2867,21 +2876,29 @@ function setupControls() {
     const drawerOverlay = document.getElementById('drawer-overlay');
     if (drawerOverlay) drawerOverlay.addEventListener('click', closeSideDrawer);
 
-    // V8 Theme Settings
+    // V12 Modern Theme Switch logic
     const themeBtns = document.querySelectorAll('.theme-btn');
     themeBtns.forEach(btn => {
         btn.addEventListener('click', (e) => {
             const theme = e.target.getAttribute('data-theme');
-            document.body.className = theme === 'light' ? '' : `${theme}-theme`;
+
+            // Adjust body class (if we need it for outer UI)
+            document.body.className = theme === 'light' ? 'light-theme' : (theme === 'sepia' ? 'sepia-theme' : 'dark-theme');
+            document.body.style.background = theme === 'light' ? '#f4f4f9' : (theme === 'sepia' ? '#fbf0d9' : '#111827');
+
             themeBtns.forEach(b => b.classList.remove('active'));
             e.target.classList.add('active');
 
-            // Apply to EPUB if active
-            if (epubRendition) {
-                let color = theme === 'dark' ? '#fff' : '#3d3024';
-                if (theme === 'light') color = '#000';
-                epubRendition.themes.default({ body: { "color": `${color} !important` } });
+            // Apply to EPUB explicitly using predefined themes
+            if (window.epubRendition) {
+                window.epubRendition.themes.select(theme);
             }
+
+            try {
+                const storedSettings = JSON.parse(localStorage.getItem('epub_settings') || '{}');
+                storedSettings.theme = theme;
+                localStorage.setItem('epub_settings', JSON.stringify(storedSettings));
+            } catch (err) { }
         });
     });
 
@@ -3026,12 +3043,14 @@ function initEpubReader(arrayBuffer) {
     let defaultSpread = 'auto'; // Will be mapped to 'none' or 'auto'
     let defaultZoom = '100%';
 
+    let defaultTheme = 'dark';
     try {
         const storedSettings = localStorage.getItem('epub_settings');
         if (storedSettings) {
             const parsed = JSON.parse(storedSettings);
             if (parsed.spread === false) defaultSpread = 'none';
             if (parsed.zoom) defaultZoom = `${parsed.zoom}%`;
+            if (parsed.theme) defaultTheme = parsed.theme;
 
             // Sync UI state
             const toggleSpreadBtn = document.getElementById('toggle-spread');
@@ -3046,7 +3065,7 @@ function initEpubReader(arrayBuffer) {
             }
         }
     } catch (e) {
-        console.warn("Failed to load epub settings from localStorage", e);
+        console.warn("Failed to load epub settings", e);
     }
 
     epubRendition = epubBook.renderTo("epub-render-target", {
@@ -3058,29 +3077,46 @@ function initEpubReader(arrayBuffer) {
         snap: true
     });
 
-    // Register a comfortable theme for the epub engine
-    epubRendition.themes.register("elite-comfort", {
-        "body": {
-            "padding": "0 5%",
-            "line-height": "1.6 !important",
-            "font-family": "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important",
-            "color": "var(--text-primary) !important",
-            "background": "transparent !important"
-        },
-        "p": {
-            "font-size": "1.1rem !important",
-            "margin-bottom": "1em !important"
-        }
+    // V12: Dynamic Theme Selection with Strict Overrides
+    const commonStyles = {
+        "padding": "0 5% !important",
+        "line-height": "1.6 !important",
+        "font-family": "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important"
+    };
+
+    epubRendition.themes.register("light", {
+        "body": { "background": "#f4f4f9 !important", "color": "#111827 !important", ...commonStyles },
+        "p": { "color": "#111827 !important", "background": "transparent !important" },
+        "span": { "color": "#111827 !important", "background": "transparent !important" },
+        "div": { "color": "#111827 !important", "background": "transparent !important" },
+        "h1": { "color": "#111827 !important" }, "h2": { "color": "#111827 !important" }, "h3": { "color": "#111827 !important" }
     });
-    epubRendition.themes.select("elite-comfort");
+
+    epubRendition.themes.register("sepia", {
+        "body": { "background": "#fbf0d9 !important", "color": "#5c4b37 !important", ...commonStyles },
+        "p": { "color": "#5c4b37 !important", "background": "transparent !important" },
+        "span": { "color": "#5c4b37 !important", "background": "transparent !important" },
+        "div": { "color": "#5c4b37 !important", "background": "transparent !important" },
+        "h1": { "color": "#5c4b37 !important" }, "h2": { "color": "#5c4b37 !important" }, "h3": { "color": "#5c4b37 !important" }
+    });
+
+    epubRendition.themes.register("dark", {
+        "body": { "background": "#111827 !important", "color": "#f9fafb !important", ...commonStyles },
+        "p": { "color": "#f9fafb !important", "background": "transparent !important" },
+        "span": { "color": "#f9fafb !important", "background": "transparent !important" },
+        "div": { "color": "#f9fafb !important", "background": "transparent !important" },
+        "h1": { "color": "#f9fafb !important" }, "h2": { "color": "#f9fafb !important" }, "h3": { "color": "#f9fafb !important" }
+    });
+
+    epubRendition.themes.select(defaultTheme);
     epubRendition.themes.fontSize(defaultZoom);
 
+    // V9 Swipe to turn pages
+    let touchStartX = 0; let touchEndX = 0;
+
     epubBook.ready.then(() => {
-        // Generate locations for slider logic
         return epubBook.locations.generate(1600);
-    }).then(() => {
-        // Locations generated, slider is now ready to use percentage
-    });
+    }).then(() => { });
 
     window.dbAPI.getProgress('currentBook').then(prog => {
         if (prog && prog.location) epubRendition.display(prog.location);
@@ -3089,11 +3125,10 @@ function initEpubReader(arrayBuffer) {
 
     epubRendition.on("relocated", (location) => {
         window.dbAPI.saveProgress('currentBook', location.start.cfi);
-        // Dispatch event for Slider to update
         window.dispatchEvent(new CustomEvent('epub-relocated', { detail: location }));
     });
 
-    // V9 Native EPUB.js Selection Event (Dictionary Integration)
+    // V9 Native EPUB.js Selection Event
     epubRendition.on("selected", async (cfiRange, contents) => {
         epubBook.getRange(cfiRange).then(range => {
             const word = range.toString().trim();
@@ -3108,46 +3143,61 @@ function initEpubReader(arrayBuffer) {
     });
 
     epubRendition.hooks.content.register((contents, view) => {
-        // V8: Let the book breathe, minimal overrides to keep original book layout
-        contents.addStylesheetRules([
-            ['body', ['background-color: transparent !important', 'color: var(--text-primary) !important']]
-        ]);
-
         const doc = contents.document;
+
+        // Shadowing & RPG Iframe Entegrasyonu: Paragrafların sonuna mikrofon ekle
+        requestAnimationFrame(() => {
+            const paragraphs = doc.querySelectorAll('p, li, h1, h2, h3, div.text');
+            paragraphs.forEach(p => {
+                const text = p.textContent.trim();
+                // Sadece yeterli uzunluktaki ve henüz mikrofon eklenmemiş cümlelere mühürle
+                if (text.length > 5 && !p.dataset.shadowEngaged) {
+                    p.dataset.shadowEngaged = "true";
+
+                    const micBtn = doc.createElement('button');
+                    micBtn.innerHTML = '🎙️';
+                    micBtn.className = 'epub-mic-btn';
+                    micBtn.style.cssText = 'background:transparent; border:none; cursor:pointer; font-size:1rem; margin-left:8px; display:inline-block; opacity:0.6; padding:2px; vertical-align:middle;';
+
+                    micBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        // Iframe'den ana pencereye geçiş yapıp Shadowing fonksiyonunu tetikle
+                        window.parent.startSentenceShadowing(text, micBtn);
+                    };
+
+                    p.style.position = 'relative'; // Stabil görünüm için
+                    p.appendChild(micBtn);
+                }
+            });
+        });
 
         // Tap to toggle menu or turn pages
         doc.addEventListener('click', (e) => {
+            const target = e.target;
+            if (target.className === 'epub-mic-btn' || target.closest('.epub-mic-btn')) return;
             if (contents.window.getSelection().toString().trim().length > 0) return;
+
             const x = e.clientX;
             const width = contents.window.innerWidth;
             if (x < width * 0.2) epubRendition.prev();
             else if (x > width * 0.8) epubRendition.next();
             else {
+                const isUIActive = document.querySelector('.floating-ui').classList.contains('active');
                 document.querySelectorAll('.floating-ui').forEach(ui => ui.classList.toggle('active'));
             }
         });
 
-        // V9 Swipe to turn pages
-        let touchStartX = 0;
-        let touchEndX = 0;
-
-        doc.addEventListener('touchstart', e => {
-            touchStartX = e.changedTouches[0].screenX;
-        }, false);
-
+        doc.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, false);
         doc.addEventListener('touchend', e => {
+            if (e.target.className === 'epub-mic-btn' || e.target.closest('.epub-mic-btn')) return;
             touchEndX = e.changedTouches[0].screenX;
             handleSwipe();
         }, false);
 
         function handleSwipe() {
             const swipeThreshold = 50;
-            if (touchEndX < touchStartX - swipeThreshold) {
-                epubRendition.next(); // Swipe left -> next
-            }
-            if (touchEndX > touchStartX + swipeThreshold) {
-                epubRendition.prev(); // Swipe right -> prev
-            }
+            if (touchEndX < touchStartX - swipeThreshold) epubRendition.next();
+            if (touchEndX > touchStartX + swipeThreshold) epubRendition.prev();
         }
     });
 }
@@ -3203,5 +3253,7 @@ function closeSideDrawer() {
 </body>
 
 </html>
+
+
 
 
