@@ -1040,10 +1040,8 @@ function initEpubReader(arrayBuffer) {
                 playNextTTS();
             };
 
-            // Small delay helps mobile engines initialize strictly after click
-            setTimeout(() => {
-                window.speechSynthesis.speak(utterance);
-            }, 50);
+            // V18: iOS Safari REQUIRES strictly synchronous execution on user gesture. Do NOT use setTimeout here!
+            window.speechSynthesis.speak(utterance);
         }
 
         listenBtn.addEventListener('click', () => {
@@ -1083,7 +1081,7 @@ function initEpubReader(arrayBuffer) {
     epubBook = ePub(arrayBuffer);
 
     // V9 True EPUB Settings defaults
-    let defaultSpread = 'auto'; // Will be mapped to 'none' or 'auto'
+    let defaultSpread = 'none'; // Force 'none' so book always acts as a single tam sayfa
     let defaultZoom = '100%';
 
     let defaultTheme = 'dark';
