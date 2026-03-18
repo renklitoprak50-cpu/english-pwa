@@ -765,6 +765,48 @@ function setupControls() {
         });
     });
 
+    // V15 Custom Color Picker Logic
+    const btnApplyCustom = document.getElementById('btn-apply-custom-colors');
+    if (btnApplyCustom) {
+        btnApplyCustom.addEventListener('click', () => {
+            const textColor = document.getElementById('custom-text-color').value;
+            const bgColor = document.getElementById('custom-bg-color').value;
+
+            // Update main body
+            document.body.style.background = bgColor;
+            themeBtns.forEach(b => b.classList.remove('active'));
+
+            if (window.epubRendition) {
+                window.epubRendition.themes.register("custom", {
+                    "body": {
+                        "background": `${bgColor} !important`,
+                        "color": `${textColor} !important`,
+                        "padding": "0 5% !important",
+                        "line-height": "1.6 !important",
+                        "font-family": "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important"
+                    },
+                    "p": { "color": `${textColor} !important`, "background": "transparent !important" },
+                    "span": { "color": `${textColor} !important`, "background": "transparent !important" },
+                    "div": { "color": `${textColor} !important`, "background": "transparent !important" },
+                    "h1": { "color": `${textColor} !important` }, "h2": { "color": `${textColor} !important` }, "h3": { "color": `${textColor} !important` }
+                });
+                window.epubRendition.themes.select("custom");
+            }
+
+            try {
+                const storedSettings = JSON.parse(localStorage.getItem('epub_settings') || '{}');
+                storedSettings.theme = 'custom';
+                storedSettings.customText = textColor;
+                storedSettings.customBg = bgColor;
+                localStorage.setItem('epub_settings', JSON.stringify(storedSettings));
+            } catch (err) { }
+
+            // Close Drawer
+            document.getElementById('side-drawer').classList.remove('open');
+            document.getElementById('drawer-overlay').classList.remove('active');
+        });
+    }
+
     // V8 EPUB Slider Navigation
     const slider = document.getElementById('epub-slider');
     const progressText = document.getElementById('epub-progress-text');
@@ -900,6 +942,70 @@ function initEpubReader(arrayBuffer) {
     document.getElementById('text-viewer-layer').classList.add('hidden');
     document.getElementById('local-viewer-layer').classList.remove('hidden');
 
+    // V13 Dynamic TTS Action Bar specifically for EPUBs
+    let epubActionBar = document.getElementById('epub-action-bar');
+    if (!epubActionBar) {
+        epubActionBar = document.createElement('div');
+        epubActionBar.id = 'epub-action-bar';
+        epubActionBar.className = 'floating-ui floating-top';
+        epubActionBar.style.cssText = 'position:absolute; gap: 10px; padding: 10px 20px; z-index: 200; display: flex; justify-content: center; top: 10px; width: 100%; pointer-events: none;';
+
+        const listenBtn = document.createElement('button');
+        listenBtn.id = 'btn-epub-listen';
+        listenBtn.className = 'btn primary';
+        listenBtn.style.cssText = 'pointer-events: auto; font-weight: bold; border-radius: 20px; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4); padding: 6px 16px; display: flex; align-items: center; gap: 8px; font-size: 0.9rem;';
+        listenBtn.innerHTML = '🔊 Sayfayı Dinle';
+
+        epubActionBar.appendChild(listenBtn);
+
+        // V14 Explicit Settings Button
+        const settingsBtn = document.createElement('button');
+        settingsBtn.id = 'btn-epub-settings';
+        settingsBtn.className = 'btn secondary';
+        settingsBtn.style.cssText = 'pointer-events: auto; font-weight: bold; border-radius: 20px; background: rgba(50,50,50,0.8); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 6px 16px; display: flex; align-items: center; gap: 8px; font-size: 0.9rem;';
+        settingsBtn.innerHTML = '⚙️ Ayarlar';
+        epubActionBar.appendChild(settingsBtn);
+
+        document.getElementById('local-viewer-layer').appendChild(epubActionBar);
+
+        settingsBtn.addEventListener('click', () => {
+            document.getElementById('side-drawer').classList.add('open');
+            document.getElementById('drawer-overlay').classList.add('active');
+        });
+
+        listenBtn.addEventListener('click', () => {
+            if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
+                window.speechSynthesis.pause();
+                listenBtn.innerHTML = '▶️ Devam Et';
+            } else if (window.speechSynthesis.paused) {
+                window.speechSynthesis.resume();
+                listenBtn.innerHTML = '⏸ Duraklat';
+            } else {
+                if (window.epubRendition && window.epubRendition.getContents().length > 0) {
+                    const doc = window.epubRendition.getContents()[0].document;
+                    const textContent = doc.body.textContent || doc.body.innerText || '';
+                    if (textContent.trim()) {
+                        const utterance = new SpeechSynthesisUtterance(textContent.trim());
+                        let langCode = 'en-US';
+                        if (window.currentBookMeta && window.currentBookMeta.langMap) {
+                            langCode = window.currentBookMeta.langMap.speech;
+                        } else if (window.globals) {
+                            langCode = window.globals.getActiveLanguageMap().speech;
+                        }
+                        utterance.lang = langCode;
+                        utterance.rate = 1.0;
+                        window.speechSynthesis.speak(utterance);
+                        listenBtn.innerHTML = '⏸ Duraklat';
+
+                        utterance.onend = () => {
+                            listenBtn.innerHTML = '🔊 Sayfayı Okumaya Başla';
+                        };
+                    }
+                }
+            }
+        });
+    }
+
     epubBook = ePub(arrayBuffer);
 
     // V9 True EPUB Settings defaults
@@ -907,6 +1013,8 @@ function initEpubReader(arrayBuffer) {
     let defaultZoom = '100%';
 
     let defaultTheme = 'dark';
+    let customTextColor = '#ffffff';
+    let customBgColor = '#111827';
     try {
         const storedSettings = localStorage.getItem('epub_settings');
         if (storedSettings) {
@@ -914,6 +1022,8 @@ function initEpubReader(arrayBuffer) {
             if (parsed.spread === false) defaultSpread = 'none';
             if (parsed.zoom) defaultZoom = `${parsed.zoom}%`;
             if (parsed.theme) defaultTheme = parsed.theme;
+            if (parsed.customText) customTextColor = parsed.customText;
+            if (parsed.customBg) customBgColor = parsed.customBg;
 
             // Sync UI state
             const toggleSpreadBtn = document.getElementById('toggle-spread');
@@ -969,6 +1079,14 @@ function initEpubReader(arrayBuffer) {
         "span": { "color": "#f9fafb !important", "background": "transparent !important" },
         "div": { "color": "#f9fafb !important", "background": "transparent !important" },
         "h1": { "color": "#f9fafb !important" }, "h2": { "color": "#f9fafb !important" }, "h3": { "color": "#f9fafb !important" }
+    });
+
+    epubRendition.themes.register("custom", {
+        "body": { "background": `${customBgColor} !important`, "color": `${customTextColor} !important`, ...commonStyles },
+        "p": { "color": `${customTextColor} !important`, "background": "transparent !important" },
+        "span": { "color": `${customTextColor} !important`, "background": "transparent !important" },
+        "div": { "color": `${customTextColor} !important`, "background": "transparent !important" },
+        "h1": { "color": `${customTextColor} !important` }, "h2": { "color": `${customTextColor} !important` }, "h3": { "color": `${customTextColor} !important` }
     });
 
     epubRendition.themes.select(defaultTheme);
