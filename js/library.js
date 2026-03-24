@@ -238,4 +238,33 @@ async function fetchGutenbergShelf(langMap) {
     }
 }
 
-window.libraryAPI = { searchCombined, fetchGutenbergShelf };
+// ==========================================
+// V20: DOUBLE SOURCE EPUB FAILOVER (OPENLIBRARY)
+// ==========================================
+async function fetchOpenLibraryEpub(title, author) {
+    try {
+        const query = `${title} ${author || ''}`.trim();
+        const url = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=3`;
+
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (data && data.docs && data.docs.length > 0) {
+            // Find the first document that has an Internet Archive (ia) identifier and epub availability
+            const doc = data.docs.find(d => d.ia && d.ia.length > 0 && d.has_fulltext);
+            if (doc) {
+                const iaId = doc.ia[0];
+                // Public Domain EPUBs on IA are mapped directly to their ID
+                const epubUrl = `https://archive.org/download/${iaId}/${iaId}.epub`;
+                console.log("Double Source Fallback Active! Found OpenLibrary / IA EPUB:", epubUrl);
+                return epubUrl;
+            }
+        }
+        return null;
+    } catch (err) {
+        console.error("OpenLibrary Failover completely failed:", err);
+        return null;
+    }
+}
+
+window.libraryAPI = { searchCombined, fetchGutenbergShelf, fetchOpenLibraryEpub };

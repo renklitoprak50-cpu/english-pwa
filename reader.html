@@ -1361,6 +1361,31 @@
                 <input type="range" id="zoom-slider" min="80" max="250" value="100"
                     style="width: 100%; cursor: pointer;">
             </div>
+
+            <!-- V20 Advanced Reader UI Options -->
+            <div style="margin-top: 15px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <h5 style="font-size: 0.8rem; color: var(--text-secondary);">Satır Aralığı</h5>
+                    <span id="line-height-val" style="font-size: 0.8rem; font-weight: bold;">1.6x</span>
+                </div>
+                <input type="range" id="line-height-slider" min="10" max="30" value="16"
+                    style="width: 100%; cursor: pointer;">
+            </div>
+
+            <div style="margin-top: 15px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <h5 style="font-size: 0.8rem; color: var(--text-secondary);">Kenar Boşluğu</h5>
+                    <span id="margin-val" style="font-size: 0.8rem; font-weight: bold;">5%</span>
+                </div>
+                <input type="range" id="margin-slider" min="0" max="25" value="5" style="width: 100%; cursor: pointer;">
+            </div>
+
+            <div style="margin-top: 20px;">
+                <button id="toggle-autoscroll" class="btn secondary"
+                    style="width: 100%; border: 1px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    🔄 Otomatik Kaydırma: Kapalı
+                </button>
+            </div>
         </div>
     </div>
     <div id="drawer-overlay" class="drawer-overlay"></div>
@@ -3065,6 +3090,60 @@
                         localStorage.setItem('epub_settings', JSON.stringify(currentSettings));
                     });
                 }
+
+                // V20 Line Height & Margin Controllers
+                const lhSlider = document.getElementById('line-height-slider');
+                const lhVal = document.getElementById('line-height-val');
+                if (lhSlider && lhVal) {
+                    lhSlider.addEventListener('input', (e) => {
+                        lhVal.textContent = `${(e.target.value / 10).toFixed(1)}x`;
+                    });
+                    lhSlider.addEventListener('change', (e) => {
+                        if (!epubRendition) return;
+                        const newLh = `${(e.target.value / 10).toFixed(1)} !important`;
+                        epubRendition.themes.override('line-height', newLh);
+                        const settings = JSON.parse(localStorage.getItem('epub_settings') || '{}');
+                        settings.lineHeight = e.target.value;
+                        localStorage.setItem('epub_settings', JSON.stringify(settings));
+                    });
+                }
+
+                const marginSlider = document.getElementById('margin-slider');
+                const marginVal = document.getElementById('margin-val');
+                if (marginSlider && marginVal) {
+                    marginSlider.addEventListener('input', (e) => {
+                        marginVal.textContent = `${e.target.value}%`;
+                    });
+                    marginSlider.addEventListener('change', (e) => {
+                        if (!epubRendition) return;
+                        const newMargin = `0 ${e.target.value}% !important`;
+                        epubRendition.themes.override('padding', newMargin);
+                        const settings = JSON.parse(localStorage.getItem('epub_settings') || '{}');
+                        settings.margin = e.target.value;
+                        localStorage.setItem('epub_settings', JSON.stringify(settings));
+                    });
+                }
+
+                // V20 Auto-Scroll (Auto-Page Turn for Paginated Flow)
+                const autoscrollBtn = document.getElementById('toggle-autoscroll');
+                if (autoscrollBtn) {
+                    autoscrollBtn.addEventListener('click', () => {
+                        if (window.autoScrollInterval) {
+                            clearInterval(window.autoScrollInterval);
+                            window.autoScrollInterval = null;
+                            autoscrollBtn.innerHTML = '🔄 Otomatik Kaydırma: Kapalı';
+                            autoscrollBtn.style.background = '';
+                        } else {
+                            // Turn page every 15 seconds as a baseline slow-scroll emulation
+                            window.autoScrollInterval = setInterval(() => {
+                                if (epubRendition) epubRendition.next();
+                            }, 15000);
+                            autoscrollBtn.innerHTML = '🔄 Otomatik Kaydırma: Açık (15s)';
+                            autoscrollBtn.style.background = 'var(--success)';
+                        }
+                    });
+                }
+
             }
         }
 
@@ -3253,6 +3332,16 @@
 
                                         utterance.onend = () => {
                                             targetListenBtn.innerHTML = '🔊 Dinle';
+
+                                            // V20: TTS Synchronized Auto-Scroll Hook
+                                            if (window.autoScrollInterval) {
+                                                if (epubRendition) {
+                                                    epubRendition.next();
+                                                    setTimeout(() => {
+                                                        if (targetListenBtn) targetListenBtn.click();
+                                                    }, 1500); // Wait for page turn animation before resuming speech
+                                                }
+                                            }
                                         };
                                         utterance.onerror = (e) => {
                                             console.warn('TTS Error:', e);
