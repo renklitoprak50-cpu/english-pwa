@@ -172,10 +172,22 @@ function createBookCard(meta, isOffline = false, isVerified = false) {
 
                 // V10: If it's an EPUB, route STRICTLY through our API proxy
                 if (meta.epub_url) {
-                    const proxyUrl = '/api/proxy?url=' + encodeURIComponent(meta.epub_url);
-                    const res = await fetch(proxyUrl, { redirect: 'follow' });
+                    let proxyUrl = '/api/proxy?url=' + encodeURIComponent(meta.epub_url);
+                    let res = await fetch(proxyUrl, { redirect: 'follow' });
 
-                    if (!res.ok) throw new Error("API Proxy failed to download EPUB");
+                    // V20: DOUBLE SOURCE EPUB FAILOVER
+                    if (!res.ok) {
+                        console.warn("Gutenberg EPUB fetch failed. Initiating Double Source Failover...");
+                        if (window.libraryAPI && window.libraryAPI.fetchOpenLibraryEpub) {
+                            const fallbackUrl = await window.libraryAPI.fetchOpenLibraryEpub(meta.title, meta.author);
+                            if (fallbackUrl) {
+                                proxyUrl = '/api/proxy?url=' + encodeURIComponent(fallbackUrl);
+                                res = await fetch(proxyUrl, { redirect: 'follow' });
+                            }
+                        }
+                    }
+
+                    if (!res.ok) throw new Error("API Proxy failed to download EPUB (Both sources failed)");
                     arrayBuffer = await res.arrayBuffer();
                 }
 

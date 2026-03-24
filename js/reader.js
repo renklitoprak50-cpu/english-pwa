@@ -1053,13 +1053,45 @@ function initEpubReader(arrayBuffer) {
 
                             if (text.length > 5) {
                                 const utterance = new SpeechSynthesisUtterance(text);
-                                utterance.lang = "en-US"; // Dil Kilidi
+
+                                // V20: Dynamic TTS Language Detection
+                                let bookLang = 'en-US';
+                                try {
+                                    const meta = await epubBook.loaded.metadata;
+                                    if (meta && meta.language) {
+                                        bookLang = meta.language;
+                                    }
+                                } catch (e) { console.warn("TTS Language read failed, defaulting to en-US"); }
+
+                                utterance.lang = bookLang;
+
+                                // V20: Universal Voice Matching
+                                const voices = window.speechSynthesis.getVoices();
+                                let selectedVoice = voices.find(v => v.lang.toLowerCase() === bookLang.toLowerCase());
+                                if (!selectedVoice && bookLang.length >= 2) {
+                                    const prefix = bookLang.substring(0, 2).toLowerCase();
+                                    selectedVoice = voices.find(v => v.lang.toLowerCase().startsWith(prefix));
+                                }
+                                if (selectedVoice) {
+                                    utterance.voice = selectedVoice;
+                                }
+
                                 utterance.rate = 1.0;
 
                                 window._currentMobileUtterance = utterance; // Failsafe
 
                                 utterance.onend = () => {
                                     listenBtn.innerHTML = '🔊 Dinle';
+
+                                    // V20: TTS Synchronized Auto-Scroll Hook
+                                    if (window.autoScrollInterval) {
+                                        if (epubRendition) {
+                                            epubRendition.next();
+                                            setTimeout(() => {
+                                                if (listenBtn) listenBtn.click();
+                                            }, 1500); // Allow page turn to render
+                                        }
+                                    }
                                 };
                                 utterance.onerror = (e) => {
                                     console.warn('TTS Error:', e);
