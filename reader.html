@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -980,8 +980,8 @@
         }
 
         #text-viewer-layer {
-            display: none !important;
-            /* Disabled text parser */
+            display: none;
+            /* Disabled by default, shown by JS */
         }
 
         /* =========================================
@@ -3174,7 +3174,7 @@ function initEpubReader(arrayBuffer) {
         });
 
         // LISTEN BUTTON
-        const listenBtn = document.createElement('button');
+        let listenBtn = document.createElement('button');
         listenBtn.id = 'btn-epub-listen';
         listenBtn.className = 'btn primary';
         listenBtn.style.cssText = 'pointer-events: auto; font-weight: bold; border-radius: 20px; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4); padding: 6px 12px; display: flex; align-items: center; gap: 4px; font-size: 0.85rem;';
@@ -3229,7 +3229,7 @@ function initEpubReader(arrayBuffer) {
         });
 
         // 1. Dinleme (TTS) Aktivasyonu
-        const listenBtn = document.getElementById('btn-epub-listen');
+        listenBtn = document.getElementById('btn-epub-listen');
         if (listenBtn) {
             listenBtn.addEventListener('click', async () => {
                 if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
@@ -3305,6 +3305,7 @@ function initEpubReader(arrayBuffer) {
         });
 
         epubRendition.themes.select(defaultTheme);
+        const defaultZoom = (function() { try { const s = JSON.parse(localStorage.getItem('epub_settings') || '{}'); return s.zoom ? s.zoom + '%' : '100%'; } catch(e) { return '100%'; } })();
         epubRendition.themes.fontSize(defaultZoom);
 
         // V9 Swipe to turn pages
@@ -3313,7 +3314,7 @@ function initEpubReader(arrayBuffer) {
         epubBook.ready.then(() => {
             return epubBook.locations.generate(1600);
         }).then(() => {
-            if (epubRendition && window.epubBook.locations.length() > 0 && epubRendition.currentLocation()) {
+            if (epubRendition && epubBook && epubBook.locations && epubBook.locations.length() > 0 && epubRendition.currentLocation()) {
                 window.dispatchEvent(new CustomEvent('epub-relocated', { detail: epubRendition.currentLocation() }));
             }
         });
@@ -3424,12 +3425,14 @@ function initEpubReader(arrayBuffer) {
                 if (touchEndX > touchStartX + swipeThreshold) epubRendition.prev();
             }
         });
-    }
+    } // end if (!epubActionBar)
 
     // =====================================
     // DICTIONARY (V8 Side Drawer)
     // =====================================
-    async function handleWordSelection(word, context) {
+} // end initEpubReader
+
+async function handleWordSelection(word, context) {
         word = word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
         if (word.length < 2) return;
 
@@ -3452,7 +3455,7 @@ function initEpubReader(arrayBuffer) {
         }
     }
 
-    function openSideDrawer(word = null) {
+function openSideDrawer(word = null) {
         const drawer = document.getElementById('side-drawer');
         const overlay = document.getElementById('drawer-overlay');
 
@@ -3466,12 +3469,12 @@ function initEpubReader(arrayBuffer) {
         overlay.classList.add('active');
     }
 
-    function closeSideDrawer() {
+function closeSideDrawer() {
         document.getElementById('side-drawer').classList.remove('open');
         document.getElementById('drawer-overlay').classList.remove('active');
         currentWordData = null;
         if (window.speechAPI) window.speechAPI.stop();
-    }
+}
 
     </script>
 </body>
