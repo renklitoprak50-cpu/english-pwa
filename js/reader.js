@@ -465,6 +465,8 @@ function setupSonicTTS(container) {
         } else {
             ttsUtterance.lang = window.globals.getActiveLanguageMap().speech;
         }
+        
+        ttsUtterance.rate = window.ttsRate || parseFloat(localStorage.getItem('ttsRate')) || 1.0;
 
         ttsUtterance.onstart = () => {
             highlightSpan(currentSpanIndex);
