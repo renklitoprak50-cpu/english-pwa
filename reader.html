@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -2368,6 +2368,564 @@
                         </script>
                         <script>
         /* --- Inlined: js/reader.js --- */
+/**
+ * Reader Component Logic V4 (Anti-Limited Preview Fix)
+ */
+
+let currentBookMeta = null;
+let currentWordData = null;
+
+let epubBook = null;
+let epubRendition = null;
+let pdfDoc = null;
+let pdfPageNum = 1;
+let pdfCanvas = null;
+let pdfCtx = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        setupControls();
+        setupAudioPlayer();
+
+        const dictPlayBtn = document.getElementById('dict-play');
+        if (dictPlayBtn) {
+            dictPlayBtn.addEventListener('click', () => {
+                if (currentWordData && currentWordData.word && window.speechAPI) {
+                    window.speechAPI.speak(currentWordData.word, 0.9);
+                }
+            });
+        }
+
+        const bookId = localStorage.getItem('activeBookId');
+        if (!bookId) {
+            alert("Lütfen kütüphaneden bir kitap seçin.");
+            window.location.href = 'index.html';
+            return;
+        }
+
+        const db = await window.dbAPI.initDB();
+        const bookData = await db.get('books', bookId);
+
+        if (bookData) {
+            currentBookMeta = bookData.meta;
+            document.getElementById('book-title').textContent = currentBookMeta.title;
+
+            if (currentBookMeta.audio_url) {
+                initAudioPlayer(currentBookMeta.audio_url);
+            }
+
+            if (bookData.data) {
+                document.getElementById('local-viewer-layer').classList.remove('hidden');
+                document.getElementById('book-progress').classList.remove('hidden');
+                if (currentBookMeta.type === 'pdf') initPDFReader(bookData.data);
+                else initEpubReader(bookData.data);
+
+            } else if (currentBookMeta.format_url || currentBookMeta.ia_id) {
+                initNativeReader(currentBookMeta);
+            } else if (currentBookMeta.audio_url) {
+                document.getElementById('error-viewer').classList.remove('hidden');
+                document.getElementById('error-title').textContent = "🎧 Sadece Sesli Kitap";
+                document.getElementById('error-desc').textContent = "Dinlemek için aşağıdaki oynatıcıyı kullanın.";
+            } else {
+                showFinalError();
+            }
+        } else {
+            alert("Kitap verisi bulunamadı.");
+            window.location.href = 'index.html';
+        }
+    } catch (err) {
+        console.error("CRITICAL READER BOOT ERROR:", err);
+        const fallbackBar = document.getElementById('embed-fallback-bar');
+        if (fallbackBar) {
+            fallbackBar.classList.remove('hidden');
+            fallbackBar.style.background = 'var(--error)';
+            const text = document.getElementById('fallback-text');
+            if (text) text.textContent = "Kitap yüklenirken kritik bir hata oluştu: " + err.message;
+        }
+    }
+});
+
+function showFinalError() {
+    document.getElementById('error-viewer').classList.remove('hidden');
+    document.getElementById('error-title').textContent = "📖 Kitap Önizlemeye Kapalı";
+    document.getElementById('error-desc').textContent = "Bu kitap telif hakları nedeniyle kapalı, lütfen listenizdeki diğer (Açık kaynaklı) kitapları deneyin.";
+}
+
+// =====================================
+// NATIVE READER & SONIC TTS (V8 True EPUB)
+// =====================================
+let ttsUtterance = null;
+let ttsSpans = [];
+let currentSpanIndex = 0;
+let isPlaying = false;
+
+async function initNativeReader(meta) {
+    const fallbackBar = document.getElementById('embed-fallback-bar');
+    const textLayer = document.getElementById('text-viewer-layer');
+    const textTarget = document.getElementById('text-render-target');
+    const fallbackText = document.getElementById('fallback-text');
+    const ttsController = document.getElementById('tts-controller');
+
+    document.getElementById('local-viewer-layer').classList.add('hidden');
+    document.getElementById('book-progress').classList.add('hidden');
+
+    const baseBookId = meta.id || meta.ia_id;
+    const activeBookId = localStorage.getItem('activeBookId') || baseBookId;
+    const cacheKey = activeBookId.startsWith('off_') ? activeBookId : baseBookId;
+
+    // V10: Strict IndexedDB (Mühürlü) Data Priority. No More Direct Internet Downloads.
+    // All downloading is now exclusively handled by app.js (Hemen İndir ve Oku) via api/proxy
+
+    // 1. Check For EPUB Buffer
+    if (meta.epub_url) {
+        fallbackBar.classList.remove('hidden');
+        if (fallbackText) fallbackText.textContent = "Yerel Okuyucu Yükleniyor (EPUB)...";
+        fallbackBar.style.background = 'var(--accent-primary)';
+        fallbackBar.style.color = '#fff';
+        if (textLayer) textLayer.classList.add('hidden');
+
+        try {
+            const cachedEpub = await window.dbAPI.getBookContent(cacheKey + "_epub");
+            if (cachedEpub) {
+                fallbackBar.classList.add('hidden');
+                initEpubReader(cachedEpub);
+                return;
+            } else {
+                // If it reaches here, the book wasn't properly downloaded by app.js
+                throw new Error("EPUB Verisi Yerel Veritabanında Bulunamadı (Not Sealed properly).");
+            }
+        } catch (e) {
+            console.error("CRITICAL: EPUB Local Load failed.", e);
+            alert("Kitap yerel bellekte bulunamadı. Lütfen kütüphaneden tekrar indiriniz.");
+            window.location.href = 'index.html';
+            return;
+        }
+    }
+
+    // 2. Check Local DB for Text
+    const cachedText = await window.dbAPI.getBookContent(cacheKey);
+    if (cachedText) {
+        renderNativeText(cachedText, textLayer, textTarget, ttsController);
+        return;
+    }
+
+    // 3. Absolute Fallback: If no local data exists at all
+    fallbackBar.classList.remove('hidden');
+    if (fallbackText) fallbackText.textContent = "Veri Mühürlenmemiş!";
+    fallbackBar.style.background = 'var(--error)';
+    fallbackBar.style.color = '#fff';
+
+    alert("Hata: Kitap yerel veritabanında (Mühürlü) değil. Lütfen vitrine dönüp 'Hemen İndir ve Oku' butonunu kullanın.");
+    setTimeout(() => { window.location.href = 'index.html'; }, 2000);
+}
+
+function renderNativeText(text, layer, target, ttsController) {
+    if (!layer || !target) return;
+    layer.classList.remove('hidden');
+    if (ttsController) ttsController.classList.remove('hidden');
+
+    // Split text into sentences/chunks for TTS and span wrapping
+    // We match sentences ending with . ! ? followed by space or newline
+    const chunks = text.match(/[^.!?]+[.!?]+(\s|$)/g) || [text];
+
+    target.innerHTML = '';
+    ttsSpans = [];
+    currentSpanIndex = 0;
+
+    chunks.forEach((chunk, index) => {
+        const span = document.createElement('span');
+        span.textContent = chunk;
+        span.className = 'tts-chunk cursor-pointer';
+        span.dataset.index = index;
+
+        // Inline Microphone Button for Shadowing per sentence
+        const wrapper = document.createElement('span');
+        wrapper.className = 'sentence-wrapper';
+        wrapper.style.position = 'relative';
+        wrapper.style.display = 'inline';
+
+        const micBtn = document.createElement('button');
+        micBtn.innerHTML = '🎙️';
+        micBtn.style.fontSize = '0.9rem';
+        micBtn.style.background = 'transparent';
+        micBtn.style.border = 'none';
+        micBtn.style.cursor = 'pointer';
+        micBtn.style.marginLeft = '4px';
+        micBtn.style.opacity = '0.6';
+        micBtn.title = 'Shadowing Test';
+
+        // V8 Apple Books Style: Select to Translate
+        span.addEventListener('pointerup', (e) => {
+            const selection = window.getSelection();
+            const word = selection.toString().trim();
+            if (word && word.length > 0) {
+                handleWordSelection(word, chunk.trim());
+                e.stopPropagation();
+            }
+        });
+
+        micBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            startSentenceShadowing(chunk.trim(), micBtn);
+        });
+
+        wrapper.appendChild(span);
+        wrapper.appendChild(micBtn);
+        target.appendChild(wrapper);
+        ttsSpans.push(span);
+    });
+
+    setupSonicTTS(target);
+
+    // V8 Elite Pagination init
+    setTimeout(() => {
+        initPaginationControls();
+        window.dbAPI.getProgress('currentBook').then(prog => {
+            if (prog && prog.location) {
+                currentColumnIndex = parseInt(prog.location) || 0;
+                updatePagination();
+            }
+        });
+    }, 150);
+}
+
+// =====================================
+// SHADOWING API LOGIC
+// =====================================
+function startSentenceShadowing(targetText, micBtn) {
+    if (!targetText) return;
+
+    if (window.speechSynthesis && window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+    }
+
+    if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+        alert("Tarayıcınız ses tanıma (SpeechRecognition) özelliğini desteklemiyor.");
+        return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    if (currentBookMeta && currentBookMeta.langMap && currentBookMeta.langMap.speech) {
+        recognition.lang = currentBookMeta.langMap.speech;
+    } else {
+        recognition.lang = window.globals.getActiveLanguageMap().speech;
+    }
+
+    micBtn.innerHTML = '🔴';
+    micBtn.style.opacity = '1';
+
+    recognition.start();
+
+    recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript.toLowerCase();
+        const targetLower = targetText.toLowerCase().replace(/[.,!?;:]/g, '');
+
+        const words1 = transcript.split(' ');
+        const words2 = targetLower.split(' ');
+        let matches = 0;
+        words1.forEach(w => { if (words2.includes(w)) matches++; });
+
+        const score = Math.round((matches / Math.max(1, words2.length)) * 100);
+        const finalScore = Math.min(100, score);
+
+        let color = finalScore > 70 ? 'var(--success)' : 'var(--warning)';
+        micBtn.innerHTML = `<span style="font-size:0.75rem; color:${color}; font-weight:bold;">%${finalScore}</span>`;
+
+        // 1. Local RPG Integration
+        if (window.GameEngine) {
+            window.GameEngine.addXP(Math.round(finalScore / 10));
+        }
+
+        // 2. Supabase Integration (Zorunlu Bağlantı)
+        if (window.supabaseSync && window.supabaseSync.saveShadowScore) {
+            window.supabaseSync.saveShadowScore(targetText, transcript, finalScore);
+        } else {
+            // Fallback mock if Supabase script isn't loaded yet
+            console.log(`[Supabase Mühür] Score: ${finalScore}% | Target: "${targetText}" | Spoken: "${transcript}"`);
+        }
+
+        setTimeout(() => {
+            micBtn.innerHTML = '🎙️';
+            micBtn.style.opacity = '0.6';
+        }, 5000);
+    };
+
+    recognition.onerror = (event) => {
+        console.error("Speech recognition error", event.error);
+        micBtn.innerHTML = '🎙️';
+        micBtn.style.opacity = '0.6';
+    };
+}
+
+// =====================================
+// V8 ELITE NATIVE PAGINATION
+// =====================================
+let currentColumnIndex = 0;
+let totalColumns = 1;
+
+function updatePagination() {
+    const target = document.getElementById('text-render-target');
+    if (!target) return;
+
+    totalColumns = Math.ceil(target.scrollWidth / window.innerWidth);
+    if (currentColumnIndex >= totalColumns - 1) {
+        currentColumnIndex = Math.max(0, totalColumns - 1);
+        if (window.BossFight && (!window.BossFight.isDefeated)) {
+            window.BossFight.initFight();
+        }
+    }
+    if (currentColumnIndex < 0) currentColumnIndex = 0;
+
+    target.style.transform = `translateX(-${currentColumnIndex * 100}vw)`;
+    window.dbAPI.saveProgress('currentBook', currentColumnIndex.toString());
+}
+
+function initPaginationControls() {
+    const target = document.getElementById('text-render-target');
+    const layer = document.getElementById('text-scroll-area');
+    if (!target || !layer) return;
+
+    totalColumns = Math.ceil(target.scrollWidth / window.innerWidth);
+    currentColumnIndex = 0;
+
+    // Tap Zones & Menu Toggle
+    layer.onclick = (e) => {
+        if (window.getSelection().toString().trim().length > 0) return; // Wait if selecting text
+
+        const x = e.clientX;
+        const width = window.innerWidth;
+
+        if (x < width * 0.25) {
+            // Left Zone: Prev Page
+            if (currentColumnIndex > 0) {
+                currentColumnIndex--;
+                updatePagination();
+            }
+        } else if (x > width * 0.75) {
+            // Right Zone: Next Page
+            if (currentColumnIndex < totalColumns - 1) {
+                currentColumnIndex++;
+                updatePagination();
+            }
+        } else {
+            // Center Zone: Toggle Menu
+            document.querySelectorAll('.floating-ui').forEach(ui => {
+                ui.classList.toggle('active');
+            });
+        }
+    };
+
+    // Recalibrate columns on resize
+    window.addEventListener('resize', () => {
+        setTimeout(updatePagination, 50);
+    });
+
+    // Also support smooth horizontal swipes for pages
+    let touchStartX = 0;
+    layer.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
+    layer.addEventListener('touchend', e => {
+        const touchEndX = e.changedTouches[0].screenX;
+        if (touchEndX < touchStartX - 50 && currentColumnIndex < totalColumns - 1) {
+            currentColumnIndex++; updatePagination();
+        } else if (touchEndX > touchStartX + 50 && currentColumnIndex > 0) {
+            currentColumnIndex--; updatePagination();
+        }
+    }, { passive: true });
+}
+
+function setupSonicTTS(container) {
+    const playBtn = document.getElementById('tts-play');
+    const stopBtn = document.getElementById('tts-stop');
+    const nextBtn = document.getElementById('tts-next');
+    const prevBtn = document.getElementById('tts-prev');
+
+    if (!window.speechSynthesis) {
+        if (playBtn) playBtn.style.display = 'none';
+        return;
+    }
+
+    const resetPlayBtn = () => {
+        isPlaying = false;
+        if (playBtn) {
+            playBtn.textContent = '▶️';
+            playBtn.classList.remove('active-play');
+        }
+    };
+
+    const setPlayBtnActive = () => {
+        isPlaying = true;
+        if (playBtn) {
+            playBtn.textContent = '⏸';
+            playBtn.classList.add('active-play');
+        }
+    };
+
+    const highlightSpan = (index) => {
+        ttsSpans.forEach(s => s.classList.remove('tts-highlight'));
+        if (ttsSpans[index]) {
+            ttsSpans[index].classList.add('tts-highlight');
+            ttsSpans[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    };
+
+    // V8 Media Session API Integration for Shadowing
+    const updateMediaSession = () => {
+        if ('mediaSession' in navigator) {
+            navigator.mediaSession.metadata = new MediaMetadata({
+                title: currentBookMeta ? currentBookMeta.title : 'LingoBooks',
+                artist: 'Sonic Reader (TTS)',
+                album: 'Shadowing Mode',
+                artwork: [
+                    { src: 'assets/icon-192.png', sizes: '192x192', type: 'image/png' }
+                ]
+            });
+
+            navigator.mediaSession.setActionHandler('play', () => {
+                if (window.speechSynthesis.paused) {
+                    window.speechSynthesis.resume();
+                    setPlayBtnActive();
+                } else if (!isPlaying) {
+                    speakCurrent();
+                }
+                updateMediaSession();
+            });
+
+            navigator.mediaSession.setActionHandler('pause', () => {
+                window.speechSynthesis.pause();
+                resetPlayBtn();
+                updateMediaSession();
+            });
+
+            navigator.mediaSession.setActionHandler('previoustrack', () => {
+                if (currentSpanIndex > 0) {
+                    currentSpanIndex--;
+                    if (isPlaying) speakCurrent();
+                    else highlightSpan(currentSpanIndex);
+                }
+            });
+
+            navigator.mediaSession.setActionHandler('nexttrack', () => {
+                if (currentSpanIndex < ttsSpans.length - 1) {
+                    currentSpanIndex++;
+                    if (isPlaying) speakCurrent();
+                    else highlightSpan(currentSpanIndex);
+                }
+            });
+
+            navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
+        }
+    };
+
+    const speakCurrent = () => {
+        window.speechSynthesis.cancel();
+        if (currentSpanIndex >= ttsSpans.length) {
+            resetPlayBtn();
+            return;
+        }
+
+        const text = ttsSpans[currentSpanIndex].textContent;
+        ttsUtterance = new SpeechSynthesisUtterance(text);
+
+        if (currentBookMeta && currentBookMeta.langMap && currentBookMeta.langMap.speech) {
+            ttsUtterance.lang = currentBookMeta.langMap.speech;
+        } else {
+            ttsUtterance.lang = window.globals.getActiveLanguageMap().speech;
+        }
+        
+        ttsUtterance.rate = window.ttsRate || parseFloat(localStorage.getItem('ttsRate')) || 1.0;
+
+        ttsUtterance.onstart = () => {
+            highlightSpan(currentSpanIndex);
+        };
+
+        ttsUtterance.onend = () => {
+            if (isPlaying) {
+                currentSpanIndex++;
+                speakCurrent();
+            }
+        };
+
+        ttsUtterance.onerror = (e) => {
+            console.warn("TTS Error", e);
+            resetPlayBtn();
+        };
+
+        window.speechSynthesis.speak(ttsUtterance);
+        setPlayBtnActive();
+    };
+
+    if (playBtn) {
+        // Remove old listeners by cloning
+        const newPlayBtn = playBtn.cloneNode(true);
+        playBtn.parentNode.replaceChild(newPlayBtn, playBtn);
+        newPlayBtn.addEventListener('click', () => {
+            if (isPlaying) {
+                window.speechSynthesis.pause();
+                resetPlayBtn();
+            } else {
+                if (window.speechSynthesis.paused) {
+                    window.speechSynthesis.resume();
+                    setPlayBtnActive();
+                } else {
+                    speakCurrent();
+                }
+            }
+        });
+    }
+
+    if (stopBtn) {
+        const newStopBtn = stopBtn.cloneNode(true);
+        stopBtn.parentNode.replaceChild(newStopBtn, stopBtn);
+        newStopBtn.addEventListener('click', () => {
+            window.speechSynthesis.cancel();
+            resetPlayBtn();
+            ttsSpans.forEach(s => s.classList.remove('tts-highlight'));
+        });
+    }
+
+    if (nextBtn) {
+        const newNextBtn = nextBtn.cloneNode(true);
+        nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
+        newNextBtn.addEventListener('click', () => {
+            if (currentSpanIndex < ttsSpans.length - 1) {
+                currentSpanIndex++;
+                if (isPlaying) speakCurrent();
+                else highlightSpan(currentSpanIndex);
+            }
+        });
+    }
+
+    if (prevBtn) {
+        const newPrevBtn = prevBtn.cloneNode(true);
+        prevBtn.parentNode.replaceChild(newPrevBtn, prevBtn);
+        newPrevBtn.addEventListener('click', () => {
+            if (currentSpanIndex > 0) {
+                currentSpanIndex--;
+                if (isPlaying) speakCurrent();
+                else highlightSpan(currentSpanIndex);
+            }
+        });
+    }
+
+    // V7.8 Action Bar Integrations
+    const startListenBtn = document.getElementById('btn-start-listening');
+    const clearTextBtn = document.getElementById('btn-clear-text');
+
+    if (startListenBtn) {
+        const newStartBtn = startListenBtn.cloneNode(true);
+        startListenBtn.parentNode.replaceChild(newStartBtn, startListenBtn);
+        newStartBtn.addEventListener('click', () => {
+            if (window.speechSynthesis.paused) {
+                window.speechSynthesis.resume();
+                setPlayBtnActive();
+            } else if (!isPlaying) {
+                if (currentSpanIndex >= ttsSpans.length) currentSpanIndex = 0;
+                speakCurrent();
+            }
         });
     }
 
@@ -2976,6 +3534,8 @@
                                         shadowBtn.style.opacity = '0.5';
                                         shadowBtn.title = 'Tarayıcı ses tanıma desteklemiyor';
                                     }
+                                } // Closing epubActionBar block
+
                                     // V19 Audio engine injected below after Epub.js instantiation.    // V19 Audio Engine & Strict Single Page Overwrite
                                     epubBook = ePub(arrayBuffer);
 
@@ -3275,7 +3835,6 @@
                                             if (touchEndX > touchStartX + swipeThreshold) epubRendition.prev();
                                         }
                                     });
-                                } // end if (!epubActionBar)
 
                                 // =====================================
                                 // DICTIONARY (V8 Side Drawer)

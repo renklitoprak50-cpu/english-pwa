@@ -979,7 +979,7 @@ function initEpubReader(arrayBuffer) {
         });
 
         // LISTEN BUTTON
-        const listenBtn = document.createElement('button');
+        let listenBtn = document.createElement('button');
         listenBtn.id = 'btn-epub-listen';
         listenBtn.className = 'btn primary';
         listenBtn.style.cssText = 'pointer-events: auto; font-weight: bold; border-radius: 20px; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4); padding: 6px 12px; display: flex; align-items: center; gap: 4px; font-size: 0.85rem;';
@@ -1000,6 +1000,8 @@ function initEpubReader(arrayBuffer) {
             document.getElementById('side-drawer').classList.add('open');
             document.getElementById('drawer-overlay').classList.add('active');
         });
+    }
+
         // V19 Audio engine injected below after Epub.js instantiation.    // V19 Audio Engine & Strict Single Page Overwrite
         epubBook = ePub(arrayBuffer);
 
@@ -1034,7 +1036,7 @@ function initEpubReader(arrayBuffer) {
         });
 
         // 1. Dinleme (TTS) Aktivasyonu
-        const listenBtn = document.getElementById('btn-epub-listen');
+        listenBtn = document.getElementById('btn-epub-listen');
         if (listenBtn) {
             listenBtn.addEventListener('click', async () => {
                 if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
@@ -1142,7 +1144,7 @@ function initEpubReader(arrayBuffer) {
         });
 
         epubRendition.themes.select(defaultTheme);
-        epubRendition.themes.fontSize(defaultZoom);
+        epubRendition.themes.fontSize('100%');
 
         // V9 Swipe to turn pages
         let touchStartX = 0; let touchEndX = 0;
