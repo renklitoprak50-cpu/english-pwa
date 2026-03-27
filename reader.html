@@ -3227,53 +3227,145 @@ function initEpubReader(arrayBuffer) {
             flow: "paginated",
             allowScriptedContent: true
         });
+        window.epubRendition = epubRendition; // Ayarlar paneli için global referans
 
         // 1. Dinleme (TTS) Aktivasyonu
         listenBtn = document.getElementById('btn-epub-listen');
         if (listenBtn) {
-            listenBtn.addEventListener('click', async () => {
-                if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
-                    window.speechSynthesis.pause();
-                    listenBtn.innerHTML = '▶️ Devam Et';
-                } else if (window.speechSynthesis.paused) {
-                    window.speechSynthesis.resume();
-                    listenBtn.innerHTML = '⏸ Duraklat';
-                } else {
-                    listenBtn.innerHTML = '⏳ Yükleniyor...';
-                    window.speechSynthesis.cancel();
+            let currentSentenceIndex = 0;
+            let sentences = [];
+            let currentHighlightElements = [];
 
-                    if (epubRendition && epubRendition.currentLocation()) {
-                        const loc = epubRendition.currentLocation();
-                        try {
-                            const range = await epubBook.getRange(loc.start.cfi, loc.end.cfi);
-                            const text = range.toString().trim();
+            const clearHighlights = () => {
+                currentHighlightElements.forEach(el => {
+                    el.style.backgroundColor = '';
+                    el.style.textDecoration = '';
+                });
+                currentHighlightElements = [];
+            };
 
-                            if (text.length > 5) {
-                                const utterance = new SpeechSynthesisUtterance(text);
-                                utterance.lang = "en-US"; // Dil Kilidi
-                                utterance.rate = 1.0;
+            const getSentencesFromCurrentPage = () => {
+                try {
+                    // epubRendition.getContents() returns array of content objects for rendered views
+                    const contentsList = epubRendition.getContents();
+                    if (!contentsList || contentsList.length === 0) return [];
+                    const doc = contentsList[0].document;
+                    if (!doc || !doc.body) return [];
 
-                                window._currentMobileUtterance = utterance; // Failsafe
+                    // Extract all visible text
+                    const fullText = doc.body.innerText || doc.body.textContent || '';
+                    // Split into sentences on . ! ?
+                    const rawSentences = fullText.match(/[^.!?\n]+[.!?]?/g) || [];
+                    return rawSentences
+                        .map(s => s.trim())
+                        .filter(s => s.length > 8 && /[a-zA-Z]/.test(s));
+                } catch (err) {
+                    console.error('[TTS] getSentencesFromCurrentPage error:', err);
+                    return [];
+                }
+            };
 
-                                utterance.onend = () => {
-                                    listenBtn.innerHTML = '🔊 Dinle';
-                                };
-                                utterance.onerror = (e) => {
-                                    console.warn('TTS Error:', e);
-                                    listenBtn.innerHTML = '🔊 Dinle';
-                                };
+            const speakSentence = (index) => {
+                if (index >= sentences.length) {
+                    // Sayfa bitti, sonraki sayfaya geç
+                    listenBtn.innerHTML = '&#x1F50A; Dinle';
+                    clearHighlights();
+                    epubRendition.next();
+                    return;
+                }
 
-                                window.speechSynthesis.speak(utterance);
-                                listenBtn.innerHTML = '⏸ Duraklat';
-                            } else {
-                                listenBtn.innerHTML = '🔊 Dinle';
+                const sentence = sentences[index];
+                if (!sentence || sentence.trim().length === 0) {
+                    speakSentence(index + 1);
+                    return;
+                }
+
+                clearHighlights();
+
+                // Try to highlight in iframe
+                try {
+                    const contentsList = epubRendition.getContents();
+                    if (contentsList && contentsList.length > 0) {
+                        const doc = contentsList[0].document;
+                        if (doc && doc.body) {
+                            const walk = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT, null, false);
+                            let node;
+                            while ((node = walk.nextNode())) {
+                                const nodeText = node.nodeValue;
+                                const startIndex = nodeText.indexOf(sentence);
+                                if (startIndex !== -1) {
+                                    try {
+                                        const range = doc.createRange();
+                                        range.setStart(node, startIndex);
+                                        range.setEnd(node, startIndex + sentence.length);
+                                        const span = doc.createElement('span');
+                                        span.style.cssText = 'background:rgba(250,204,21,0.7)!important; color:#000!important; border-radius:3px; transition:all 0.3s;';
+                                        range.surroundContents(span);
+                                        currentHighlightElements.push(span);
+                                        span.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    } catch(e) { /* range surroundContents may fail across nodes */ }
+                                    break;
+                                }
                             }
-                        } catch (e) {
-                            console.error("Metin okuma hatası:", e);
-                            listenBtn.innerHTML = '🔊 Dinle';
                         }
                     }
+                } catch (err) {
+                    console.warn('[TTS] Highlight error (non-fatal):', err);
                 }
+
+                const utterance = new SpeechSynthesisUtterance(sentence);
+                utterance.lang = "en-US";
+                utterance.rate = 1.0;
+
+                utterance.onend = () => {
+                    // Mark as done with strikethrough
+                    currentHighlightElements.forEach(el => {
+                        el.style.backgroundColor = 'transparent';
+                        el.style.textDecoration = 'line-through';
+                        el.style.opacity = '0.6';
+                    });
+                    speakSentence(index + 1);
+                };
+
+                utterance.onerror = (e) => {
+                    console.warn('[TTS] Speech error:', e.error);
+                    if (e.error !== 'interrupted') {
+                        listenBtn.innerHTML = '&#x1F50A; Dinle';
+                        clearHighlights();
+                    }
+                };
+
+                window.speechSynthesis.speak(utterance);
+            };
+
+            listenBtn.addEventListener('click', () => {
+                if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
+                    window.speechSynthesis.pause();
+                    listenBtn.innerHTML = '&#x25B6;&#xFE0F; Devam Et';
+                } else if (window.speechSynthesis.paused) {
+                    window.speechSynthesis.resume();
+                    listenBtn.innerHTML = '&#x23F8; Duraklat';
+                } else {
+                    window.speechSynthesis.cancel();
+                    clearHighlights();
+                    sentences = getSentencesFromCurrentPage();
+                    currentSentenceIndex = 0;
+                    if (sentences.length > 0) {
+                        listenBtn.innerHTML = '&#x23F8; Duraklat';
+                        speakSentence(0);
+                    } else {
+                        listenBtn.innerHTML = '&#x1F50A; Dinle';
+                    }
+                }
+            });
+
+            // Reset TTS & highlights on page change
+            epubRendition.on('relocated', () => {
+                window.speechSynthesis.cancel();
+                clearHighlights();
+                sentences = [];
+                currentSentenceIndex = 0;
+                listenBtn.innerHTML = '&#x1F50A; Dinle';
             });
         }
         // V12: Dynamic Theme Selection with Strict Overrides
