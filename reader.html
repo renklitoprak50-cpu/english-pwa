@@ -1240,166 +1240,10 @@
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polyline points="9 18 15 12 9 6"></polyline>
                     </svg>
-                    /**
-                    * Global State & V4 Multi-Language Engine
-                    * V4 Rule: Maximum Accessibility + Polyglot Translation Mapping
-                    */
+                </button>
+            </div>
 
-                    const isPremiumUser = true;
-
-                    function checkPremiumAction(actionName) {
-                    if (isPremiumUser) return true;
-                    // V7.8: Unlocked for everyone on Vercel
-                    return true;
-                    }
-
-                    // Global Language Mappings
-                    // ol: OpenLibrary 3-letter code
-                    // mymem: MyMemory 2-letter code
-                    // speech: Web Speech API BCP 47 Locale
-                    // label: LibriVox Array filtering target
-                    const SUPPORTED_LANGS = {
-                    'en': { ol: 'eng', mymem: 'en', speech: 'en-US', label: 'English' },
-                    'de': { ol: 'ger', mymem: 'de', speech: 'de-DE', label: 'German' },
-                    'fr': { ol: 'fre', mymem: 'fr', speech: 'fr-FR', label: 'French' },
-                    'es': { ol: 'spa', mymem: 'es', speech: 'es-ES', label: 'Spanish' },
-                    'tr': { ol: 'tur', mymem: 'tr', speech: 'tr-TR', label: 'Turkish' },
-                    'it': { ol: 'ita', mymem: 'it', speech: 'it-IT', label: 'Italian' }
-                    };
-
-                    // Application Language State (Persisted)
-                    let activeContentLang = localStorage.getItem('contentLanguage') || 'en';
-
-                    function setContentLanguage(langKey) {
-                    if (SUPPORTED_LANGS[langKey]) {
-                    activeContentLang = langKey;
-                    localStorage.setItem('contentLanguage', langKey);
-                    }
-                    }
-
-                    function getActiveLanguageMap() {
-                    return SUPPORTED_LANGS[activeContentLang] || SUPPORTED_LANGS['en'];
-                    }
-
-                    window.globals = {
-                    isPremium: isPremiumUser,
-                    checkPremiumAction,
-                    SUPPORTED_LANGS,
-                    setContentLanguage,
-                    getActiveLanguageMap,
-                    get activeContentLang() { return activeContentLang; }
-                    };
-
-                    </script>
-                    <script src="https://cdn.jsdelivr.net/npm/idb@7/build/umd.js"></script>
-                    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-                    <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
-                    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
-                    <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';</script>
-                    </head>
-
-                    <body class="sepia-theme reader-mode">
-
-                        <div class="reader-wrapper" id="reader-wrapper">
-                            <!-- Top Toolbar -->
-                            <header class="reader-toolbar glass-panel floating-ui floating-top">
-                                <button id="btn-back" class="icon-btn" aria-label="Back">
-                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2">
-                                        <line x1="19" y1="12" x2="5" y2="12"></line>
-                                        <polyline points="12 19 5 12 12 5"></polyline>
-                                    </svg>
-                                </button>
-
-                                <div class="book-info">
-                                    <h2 id="book-title" class="truncate">Loading...</h2>
-                                    <!-- Local Book Progress -->
-                                    <div id="book-progress" class="progress-bar thin hidden">
-                                        <div class="progress-fill" style="width: 0%"></div>
-                                    </div>
-                                </div>
-
-                                <button onclick="if(window.BossFight) window.BossFight.initFight()" class="btn"
-                                    style="background:var(--error); color:#fff; border-radius:12px; font-weight:bold; font-size:0.8rem; margin-right:10px; padding:4px 10px;">
-                                    ?? Boss Fight
-                                </button>
-
-                                <button id="btn-settings" class="icon-btn" aria-label="Settings">
-                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2">
-                                        <circle cx="12" cy="12" r="3"></circle>
-                                        <path
-                                            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
-                                        </path>
-                                    </svg>
-                                </button>
-                            </header>
-
-                            <!-- TTS Sonic Controls & Shadowing -->
-                            <div id="tts-controller" class="floating-ui floating-bottom hidden"
-                                style="bottom: 80px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                                <div id="tts-accuracy" class="hidden"
-                                    style="background: rgba(0,0,0,0.8); color: var(--success); padding: 4px 12px; border-radius: 12px; font-weight: bold; font-size: 0.9rem; border: 1px solid var(--success);">
-                                    ?? Skor: Bekleniyor...</div>
-                                <div class="tts-controls">
-                                    <button id="tts-prev" class="tts-btn" title="Geri">?</button>
-                                    <button id="tts-play" class="tts-btn active-play" title="Oynat/Duraklat">??</button>
-                                    <button id="tts-stop" class="tts-btn" title="Durdur">?</button>
-                                    <button id="tts-next" class="tts-btn" title="leri">?</button>
-                                    <button id="tts-mic" class="tts-btn" title="Glge Konuma (Shadowing)"
-                                        style="margin-left: 10px; border-left: 1px solid rgba(255,255,255,0.2); padding-left: 15px;">???</button>
-                                </div>
-                            </div>
-
-                            <!-- Fallback Embed Controls (Plan C) / Loading State -->
-                            <div id="embed-fallback-bar" class="hidden"
-                                style="background:var(--warning); color:#000; padding:8px; text-align:center; font-size:0.9rem; font-weight:600;">
-                                <span id="fallback-text">Kaynak aranyor...</span>
-                                <button id="btn-fallback-server" class="btn primary hidden"
-                                    style="padding:4px 8px; font-size:0.8rem; margin-left:10px; background:#000; color:#fff;">
-                                    Alternatif Sunucuyu Dene (Plan C)
-                                </button>
-                            </div>
-
-                            <!-- Main Reading Area (Multi-Layer) -->
-                            <main class="book-viewer relative" id="main-viewer">
-
-                                <!-- CRITICAL ERROR PANEL (Zero-Bug Build) -->
-                                <div id="critical-error-panel" class="hidden"
-                                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; color: #ff4444; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; padding: 20px; text-align: center;">
-                                    <h1 style="font-size: 2rem; margin-bottom: 20px;">?? SSTEM HATASI</h1>
-                                    <p id="critical-error-message"
-                                        style="font-size: 1.2rem; font-family: monospace; background: rgba(255,0,0,0.1); padding: 15px; border-radius: 8px; border: 1px solid #ff4444;">
-                                        Bilinmeyen Hata</p>
-                                    <button onclick="window.location.reload(true)"
-                                        style="margin-top: 30px; padding: 10px 20px; background: #ff4444; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Sistemi
-                                        Yeniden Balat</button>
-                                    <button onclick="window.location.href='index.html'"
-                                        style="margin-top: 15px; padding: 10px 20px; background: transparent; color: #fff; border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; cursor: pointer;">Ktphaneye
-                                        Dn</button>
-                                </div>
-
-                                <!-- LAYER A: LOCAL BOOKS (EPUB/PDF) -->
-                                <div id="local-viewer-layer" class="epub-container relative hidden">
-                                    <button id="prev-page" class="nav-btn prev fade" aria-label="Previous">
-                                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none"
-                                            stroke="currentColor" stroke-width="2">
-                                            <polyline points="15 18 9 12 15 6"></polyline>
-                                        </svg>
-                                    </button>
-                                    <div id="epub-render-target"
-                                        style="z-index: 100 !important; position: relative; background: transparent !important; padding: 80px 6vw 60px 6vw; box-sizing: border-box; max-width: 1100px; margin: 0 auto;">
-                                    </div>
-                                    <canvas id="pdf-canvas" class="hidden"></canvas>
-                                    <button id="next-page" class="nav-btn next fade" aria-label="Next">
-                                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none"
-                                            stroke="currentColor" stroke-width="2">
-                                            <polyline points="9 18 15 12 9 6"></polyline>
-                                        </svg>
-                                    </button>
-                                </div>
-
-                                <!-- LAYER B: RAW TEXT VIEWER (Single-Fetch Gutenberg) -->
+            <!-- LAYER B: RAW TEXT VIEWER (Single-Fetch Gutenberg) -->
                                 <div id="text-viewer-layer" class="hidden"
                                     style="flex-grow:1; display:flex; flex-direction:column; width:100%; height:100%;">
 
@@ -2136,7 +1980,7 @@
                         <span class="text-xs font-bold text-blue-500 dark:text-blue-400 uppercase tracking-widest mb-2 block">Hedef Kelime</span>
                         <h3 id="boss-target-word" class="text-4xl font-black text-gray-800 dark:text-white capitalize">Loading...</h3>
                     </div>
-                    
+
                     <div id="boss-options" class="flex flex-col gap-3 w-full">
                         <!-- Buttons injected here -->
                     </div>
@@ -2835,7 +2679,7 @@ function setupSonicTTS(container) {
         } else {
             ttsUtterance.lang = window.globals.getActiveLanguageMap().speech;
         }
-        
+
         ttsUtterance.rate = window.ttsRate || parseFloat(localStorage.getItem('ttsRate')) || 1.0;
 
         ttsUtterance.onstart = () => {
@@ -3239,7 +3083,7 @@ function setupSonicTTS(container) {
                                             window.GameEngine.addXP(1);
                                         }
                                     });
-                                    // V9 Settings Sync UI 
+                                    // V9 Settings Sync UI
                                     const toggleSpreadBtn = document.getElementById('toggle-spread');
                                     if (toggleSpreadBtn) {
                                         toggleSpreadBtn.addEventListener('click', (e) => {

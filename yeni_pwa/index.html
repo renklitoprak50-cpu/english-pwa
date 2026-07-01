@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Hızlı Okuma & Dinleme PWA</title>
+
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1e293b">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        darkBg: '#0f172a',
+                        darkPanel: '#1e293b',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- EPUB.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+        /* Reader Area */
+        #viewer {
+            width: 100%;
+            height: calc(100vh - 140px); /* Adjust for header/footer */
+            overflow: hidden;
+            background: transparent;
+        }
+
+        /* RSVP Modal */
+        #rsvp-modal {
+            backdrop-filter: blur(5px);
+        }
+
+        .rsvp-word {
+            font-size: 3.5rem;
+            font-weight: bold;
+        }
+
+        .rsvp-focus {
+            color: #ef4444; /* Red focus letter */
+        }
+
+        .nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 60px;
+            background: rgba(0,0,0,0.1);
+            border: none;
+            cursor: pointer;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .dark .nav-btn { background: rgba(255,255,255,0.05); color: #fff; }
+        .nav-btn:hover { background: rgba(0,0,0,0.2); }
+        .dark .nav-btn:hover { background: rgba(255,255,255,0.1); }
+
+        #prev-btn { left: 10px; }
+        #next-btn { right: 10px; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 dark:bg-darkBg dark:text-gray-100 transition-colors duration-200">
+
+    <!-- Header -->
+    <header class="h-16 flex items-center justify-between px-4 bg-white dark:bg-darkPanel shadow-sm z-20 relative">
+        <h1 class="text-xl font-bold truncate" id="book-title">Epub Yükleyin</h1>
+        <div class="flex items-center gap-3">
+            <label class="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                <i class="fa-solid fa-folder-open mr-2"></i>Aç
+                <input type="file" id="upload-input" accept=".epub" class="hidden">
+            </label>
+            <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                <i class="fa-solid fa-moon dark:hidden"></i>
+                <i class="fa-solid fa-sun hidden dark:inline"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Reader Area -->
+    <main class="relative w-full mx-auto max-w-4xl" style="height: calc(100vh - 140px);">
+        <button id="prev-btn" class="nav-btn"><i class="fa-solid fa-chevron-left text-xl"></i></button>
+
+        <div id="viewer"></div>
+
+        <button id="next-btn" class="nav-btn"><i class="fa-solid fa-chevron-right text-xl"></i></button>
+    </main>
+
+    <!-- Bottom Action Bar -->
+    <footer class="h-auto py-3 bg-white dark:bg-darkPanel shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] fixed bottom-0 w-full z-20 flex flex-col items-center gap-2">
+        <div class="flex items-center gap-4 flex-wrap justify-center w-full px-4">
+            <!-- TTS Play/Pause -->
+            <button id="btn-tts" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-full font-bold shadow-md flex items-center gap-2 transition-transform active:scale-95 disabled:opacity-50">
+                <i class="fa-solid fa-volume-high"></i> Dinle
+            </button>
+
+            <!-- TTS Speed Slider -->
+            <div class="flex items-center gap-2 text-sm bg-gray-100 dark:bg-slate-700 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-slate-600">
+                <i class="fa-solid fa-gauge-simple-high"></i>
+                <input type="range" id="tts-speed" min="0.5" max="2.5" step="0.25" value="1" class="w-20 cursor-pointer">
+                <span id="tts-speed-label" class="w-8 font-mono">1.0x</span>
+            </div>
+
+            <div class="w-px h-8 bg-gray-300 dark:bg-gray-600"></div>
+
+            <!-- RSVP (Speed Reading) Toggle -->
+            <button id="btn-rsvp" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-full font-bold shadow-md flex items-center gap-2 transition-transform active:scale-95 disabled:opacity-50">
+                <i class="fa-solid fa-bolt"></i> Hızlı Okuma
+            </button>
+        </div>
+
+        <!-- Progress Info -->
+        <div class="text-xs text-gray-500 font-medium" id="progress-info">
+            0%
+        </div>
+    </footer>
+
+    <!-- Hızlı Okuma (RSVP) Modal -->
+    <div id="rsvp-modal" class="fixed inset-0 z-50 bg-white/90 dark:bg-darkBg/95 hidden flex-col items-center justify-center">
+        <!-- Close Button -->
+        <button id="btn-rsvp-close" class="absolute top-6 right-6 text-3xl text-gray-600 dark:text-gray-300 hover:text-red-500 transition-colors">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <div class="w-full max-w-2xl px-4 flex flex-col items-center gap-10">
+            <!-- WPM Controls -->
+            <div class="flex items-center gap-4 bg-gray-100 dark:bg-slate-800 p-4 rounded-2xl shadow-inner border border-gray-200 dark:border-slate-700">
+                <span class="font-bold text-gray-600 dark:text-gray-300">Hız:</span>
+                <input type="range" id="rsvp-wpm" min="150" max="800" step="10" value="300" class="w-48 cursor-pointer">
+                <span id="rsvp-wpm-label" class="font-mono font-bold text-blue-600 dark:text-blue-400 w-16 text-right">300 WPM</span>
+            </div>
+
+            <!-- Word Display -->
+            <div class="h-40 flex items-center justify-center w-full bg-white dark:bg-slate-800 rounded-3xl shadow-lg border-2 border-blue-100 dark:border-slate-700 relative overflow-hidden">
+                <!-- Center Line for Focus -->
+                <div class="absolute top-0 bottom-0 left-1/2 w-px bg-red-400/30 -ml-[1px]"></div>
+
+                <div id="rsvp-display" class="rsvp-word font-serif text-gray-900 dark:text-gray-100 text-center tracking-wide">
+                    Başlamak için...
+                </div>
+            </div>
+
+            <!-- Play Controls -->
+            <div class="flex items-center gap-6">
+                <button id="btn-rsvp-rewind" class="text-2xl text-gray-600 hover:text-blue-500 dark:text-gray-400">
+                    <i class="fa-solid fa-backward-step"></i>
+                </button>
+                <button id="btn-rsvp-play" class="w-20 h-20 bg-blue-600 text-white rounded-full text-3xl shadow-[0_0_20px_rgba(59,130,246,0.5)] hover:scale-105 transition-transform flex items-center justify-center">
+                    <i class="fa-solid fa-play ml-1"></i>
+                </button>
+                <button id="btn-rsvp-forward" class="text-2xl text-gray-600 hover:text-blue-500 dark:text-gray-400">
+                    <i class="fa-solid fa-forward-step"></i>
+                </button>
+            </div>
+
+            <div class="text-sm text-gray-500" id="rsvp-progress-text">Kalan: 0 kelime</div>
+        </div>
+    </div>
+
+    <!-- App Logic -->
+    <script src="app.js"></script>
+</body>
+</html>
