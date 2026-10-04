@@ -1,0 +1,72 @@
+[
+  {
+    "id": "pg1342",
+    "title": "Pride and Prejudice",
+    "author": "Jane Austen",
+    "level": "B2",
+    "file": "/books/pg1342.epub"
+  },
+  {
+    "id": "pg11",
+    "title": "Alice's Adventures in Wonderland",
+    "author": "Lewis Carroll",
+    "level": "B1",
+    "file": "/books/pg11.epub"
+  },
+  {
+    "id": "pg1661",
+    "title": "The Adventures of Sherlock Holmes",
+    "author": "Arthur Conan Doyle",
+    "level": "B2",
+    "file": "/books/pg1661.epub"
+  },
+  {
+    "id": "pg84",
+    "title": "Frankenstein",
+    "author": "Mary Shelley",
+    "level": "C1",
+    "file": "/books/pg84.epub"
+  },
+  {
+    "id": "pg345",
+    "title": "Dracula",
+    "author": "Bram Stoker",
+    "level": "C1",
+    "file": "/books/pg345.epub"
+  },
+  {
+    "id": "pg174",
+    "title": "The Picture of Dorian Gray",
+    "author": "Oscar Wilde",
+    "level": "C1",
+    "file": "/books/pg174.epub"
+  },
+  {
+    "id": "pg16",
+    "title": "Peter Pan",
+    "author": "J. M. Barrie",
+    "level": "B1",
+    "file": "/books/pg16.epub"
+  },
+  {
+    "id": "pg55",
+    "title": "The Wonderful Wizard of Oz",
+    "author": "L. Frank Baum",
+    "level": "B1",
+    "file": "/books/pg55.epub"
+  },
+  {
+    "id": "pg514",
+    "title": "Little Women",
+    "author": "Louisa May Alcott",
+    "level": "B2",
+    "file": "/books/pg514.epub"
+  },
+  {
+    "id": "pg64317",
+    "title": "The Great Gatsby",
+    "author": "F. Scott Fitzgerald",
+    "level": "C1",
+    "file": "/books/pg64317.epub"
+  }
+]

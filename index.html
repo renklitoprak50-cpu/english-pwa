@@ -4,7 +4,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Polyglot PWA | V5 Permanent Cache</title>
+    <title>Polyglot Reader: Offline English Reading and Vocabulary</title>
+<meta name="description" content="Read English books offline, look up words, listen with text-to-speech, speed-read in RSVP mode and practice vocabulary.">
+<link rel="icon" type="image/png" href="/assets/icon-192.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Polyglot Reader">
+<meta property="og:title" content="Polyglot Reader: Offline English Reading and Vocabulary">
+<meta property="og:description" content="Read English books offline, look up words, listen with text-to-speech, speed-read in RSVP mode and practice vocabulary.">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Polyglot Reader",
+  "description": "Read English books offline, look up words, listen with text-to-speech, speed-read in RSVP mode and practice vocabulary.",
+  "applicationCategory": "EducationalApplication",
+  "operatingSystem": "Any",
+  "inLanguage": "en",
+  "browserRequirements": "Requires JavaScript",
+  "featureList": [
+    "Offline EPUB reading",
+    "Word lookup dictionary",
+    "Text-to-speech",
+    "RSVP speed reading (100-900 WPM)",
+    "Gamified vocabulary practice"
+  ]
+}
+</script>
 
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#121212">
@@ -1063,6 +1089,7 @@
 </head>
 
 <body class="dark-theme">
+<noscript><p>Polyglot Reader: Read English books offline, look up words, listen with text-to-speech, speed-read in RSVP mode and practice vocabulary. This app needs JavaScript to run.</p></noscript>
 
     <!-- PWA Install UI Replaced by Dashboard Card in V7.6 -->
     <div class="app-container dashboard layout" id="main-layout">
@@ -2557,7 +2584,7 @@ function setupFileUpload() {
 
 function openBook(bookId) {
     localStorage.setItem('activeBookId', bookId);
-    window.location.href = 'reader.html';
+    window.location.href = '/reader';
 }
 
 // ==========================================
@@ -2857,6 +2884,7 @@ async function setupNetworkReader(meta) {
             }
         });
     </script>
+<script src="/js/starter.js" defer></script>
 </body>
 
 </html>

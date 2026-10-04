@@ -1,9 +1,8 @@
 /* --- sw.js: Sıfır Engel Versiyonu --- */
-const CACHE_NAME = 'polyglot-cache-v19';
+const CACHE_NAME = 'polyglot-cache-v20';
 const ASSETS_TO_CACHE = [
   '/',
-  '/index.html',
-  '/reader.html',
+  '/reader',
   'https://cdn.jsdelivr.net/npm/idb@7/build/umd.js',
   'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
   'https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js',
@@ -12,7 +11,7 @@ const ASSETS_TO_CACHE = [
 ];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS_TO_CACHE)));
+  e.waitUntil(caches.open(CACHE_NAME).then(c => Promise.allSettled(ASSETS_TO_CACHE.map(u => c.add(u)))));
   self.skipWaiting();
 });
 

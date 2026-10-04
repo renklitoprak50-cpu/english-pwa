@@ -1,0 +1,7 @@
+# Polyglot Reader
+
+> Read English books offline, look up words, listen with text-to-speech, speed-read in RSVP mode and practice vocabulary.
+
+## Pages
+- [App home](/): Library and learning dashboard
+- [Reader](/reader): Reading view with dictionary, text-to-speech and RSVP speed reading

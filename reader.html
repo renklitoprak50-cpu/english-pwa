@@ -25,7 +25,8 @@
     </style>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hybrid Reader | V3.2 Fail-Safe Embed</title>
+    <title>Reader | Polyglot Reader</title>
+<meta name="robots" content="noindex">
 
     <meta http-equiv="Content-Security-Policy"
         content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https: http:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https: blob:; frame-src 'self' https: blob: data:; img-src 'self' data: blob: https:;">
@@ -1448,7 +1449,7 @@
                 <button onclick="window.location.reload(true)"
                     style="margin-top: 30px; padding: 10px 20px; background: #ff4444; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Sistemi
                     Yeniden Başlat</button>
-                <button onclick="window.location.href='index.html'"
+                <button onclick="window.location.href='/'"
                     style="margin-top: 15px; padding: 10px 20px; background: transparent; color: #fff; border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; cursor: pointer;">Kütüphaneye
                     Dön</button>
             </div>
@@ -2471,7 +2472,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const bookId = localStorage.getItem('activeBookId');
         if (!bookId) {
             alert("Lütfen kütüphaneden bir kitap seçin.");
-            window.location.href = 'index.html';
+            window.location.href = '/';
             return;
         }
 
@@ -2503,7 +2504,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         } else {
             alert("Kitap verisi bulunamadı.");
-            window.location.href = 'index.html';
+            window.location.href = '/';
         }
     } catch (err) {
         console.error("CRITICAL READER BOOT ERROR:", err);
@@ -2569,7 +2570,7 @@ async function initNativeReader(meta) {
         } catch (e) {
             console.error("CRITICAL: EPUB Local Load failed.", e);
             alert("Kitap yerel bellekte bulunamadı. Lütfen kütüphaneden tekrar indiriniz.");
-            window.location.href = 'index.html';
+            window.location.href = '/';
             return;
         }
     }
@@ -2588,7 +2589,7 @@ async function initNativeReader(meta) {
     fallbackBar.style.color = '#fff';
 
     alert("Hata: Kitap yerel veritabanında (Mühürlü) değil. Lütfen vitrine dönüp 'Hemen İndir ve Oku' butonunu kullanın.");
-    setTimeout(() => { window.location.href = 'index.html'; }, 2000);
+    setTimeout(() => { window.location.href = '/'; }, 2000);
 }
 
 function renderNativeText(text, layer, target, ttsController) {
@@ -3460,7 +3461,7 @@ function setupSonicTTS(container) {
 
                             function setupControls() {
                                 const btnBack = document.getElementById('btn-back');
-                                if (btnBack) btnBack.addEventListener('click', () => window.location.href = 'index.html');
+                                if (btnBack) btnBack.addEventListener('click', () => window.location.href = '/');
 
                                 // ✅ FIX: Wire the toolbar gear icon to open settings drawer
                                 const btnSettings = document.getElementById('btn-settings');
@@ -3835,7 +3836,7 @@ function setupSonicTTS(container) {
 
                                     exitBtn.addEventListener('click', () => {
                                         window.speechSynthesis.cancel();
-                                        window.location.href = 'index.html';
+                                        window.location.href = '/';
                                     });
 
                                     // LISTEN BUTTON

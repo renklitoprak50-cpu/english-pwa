@@ -1,14 +1,28 @@
 {
-    "cleanUrls": true,
-    "headers": [
+  "cleanUrls": true,
+  "headers": [
+    {
+      "source": "/(.*\\.epub)",
+      "headers": [
         {
-            "source": "/(.*\\.epub)",
-            "headers": [
-                {
-                    "key": "Content-Type",
-                    "value": "application/epub+zip"
-                }
-            ]
+          "key": "Content-Type",
+          "value": "application/epub+zip"
         }
-    ]
+      ]
+    },
+    {
+      "source": "/sw.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        }
+      ]
+    }
+  ],
+  "functions": {
+    "api/proxy.js": {
+      "maxDuration": 30
+    }
+  }
 }
